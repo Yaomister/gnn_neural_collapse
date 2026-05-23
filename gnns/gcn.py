@@ -1,0 +1,26 @@
+from torch.nn import ModuleList, Linear
+import torch.nn.functional as F
+from torch_geometric.nn import GCNConv, global_mean_pool
+
+
+class GCN:
+    def __init__(self, in_dim, hidden_layer_dim, num_hidden_layers, num_classes):
+        super().__init__()
+        self.conv_layers = ModuleList()
+        self.conv_layers.append(GCNConv(in_channels=in_dim, out_channels=hidden_layer_dim))
+        for _ in range(num_hidden_layers - 1):
+            self.conv_layers.append(GCNConv(in_dim=hidden_layer_dim, out_channels=hidden_layer_dim))
+        
+        self.classifier = Linear(in_features=hidden_layer_dim, out_features=num_classes)
+
+
+    def forward(self, x, batch, edge_index):
+        for layer in self.conv_layers:
+            x = layer(x, edge_index)
+            x = F.relu(x)
+            
+        graph_representation = global_mean_pool(x, batch)
+
+        x = self.classifier(graph_representation)
+
+        return x, graph_representation
