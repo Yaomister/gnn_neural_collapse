@@ -80,6 +80,6 @@ def _measure_neural_collapse(model, graphs):
             all_graph_representations.append(graph_representation)
             all_true_labels.append(batch.y)
 
-    model.train
+    model.train()
     return torch.cat(all_graph_representations), torch.cat(all_true_labels)
 
