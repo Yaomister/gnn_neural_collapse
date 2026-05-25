@@ -19,7 +19,6 @@ class StochasticBlockModel():
 
         self.nodes_per_class = num_nodes // num_classes
 
-    
         
     
     def generate(self, num_graphs):
