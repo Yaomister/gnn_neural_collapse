@@ -1,7 +1,7 @@
 
 import torch
 import numpy as np
-from gnns.gcn import GCN, GAT, GraphSAGE
+from gnns import GCN, GAT, GraphSAGE
 from training import train
 import matplotlib.pyplot as plt
 from torch_geometric.datasets import TUDataset
@@ -66,4 +66,4 @@ def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
 
 
 if __name__ == "__main__":
-    run()
+    run(mutag, "MUTAG")

@@ -12,7 +12,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
     loader = DataLoader(dataset = graphs, batch_size=32, shuffle=True)
 
     optimizer = Adam(
-        model = model.parameters(),
+        params = model.parameters(),
         lr = learning_rate,
         weight_decay=weight_decay
     )
@@ -35,6 +35,9 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
 
         for batch in loader:
             optimizer.zero_grad()
+            # print(batch.edge_index)
+            # print(batch.edge_index.shape)
+
             logits, graph_representation = model(batch.x, batch.edge_index, batch.batch)
 
             loss = F.cross_entropy(logits, batch.y)
@@ -52,15 +55,15 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
         if (epoch % measure_interval == 0):
             all_representation, all_true_labels = _measure_neural_collapse(model, graphs)
 
-            metrics = calculate_metrics(all_representation, all_true_labels, num_classes)
+            nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
 
             record["epoch"].append(epoch)
-            record["nc1"].append(metrics["nc1"])
-            record['nc2'].append(metrics['nc2'])
-            record['training_losss'].append(total_loss/ len(loader))
+            record["nc1"].append(nc1)
+            record['nc2'].append(nc2)
+            record['training_loss'].append(total_loss/ len(loader))
             record['training_accuracy'].append(correct/total)
 
-            print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | NC1 : {record["nc1"]:.4f} | NC2 : {record["nc2"]:.4f}")
+            print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | NC1 : {record["nc1"][-1]:.4f} | NC2 : {record["nc2"][-1]:.4f}")
 
     return record
 

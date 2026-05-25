@@ -9,12 +9,12 @@ class GCN(Module):
         self.conv_layers = ModuleList()
         self.conv_layers.append(GCNConv(in_channels=in_dim, out_channels=hidden_layer_dim))
         for _ in range(num_hidden_layers - 1):
-            self.conv_layers.append(GCNConv(in_dim=hidden_layer_dim, out_channels=hidden_layer_dim))
+            self.conv_layers.append(GCNConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim))
         
         self.classifier = Linear(in_features=hidden_layer_dim, out_features=num_classes)
 
 
-    def forward(self, x, batch, edge_index):
+    def forward(self, x, edge_index, batch):
         for layer in self.conv_layers:
             x = layer(x, edge_index)
             x = F.relu(x)

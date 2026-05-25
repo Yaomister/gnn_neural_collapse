@@ -41,14 +41,15 @@ class StochasticBlockModel():
                         prob = self.p_in
                     else:
                         prob = self.p_out
-                    if (np.random.randint() < prob):
+                    if (np.random.rand() < prob):
                         edges.append([u, v])
                         edges.append([v, u])
 
             if len(edges) == 0:
                 edges = [[0, 0]]
 
-            edge_index = torch.tensor(edges, dtype=torch.long)
+            edge_index = torch.tensor(edges, dtype=torch.long).T
+
 
             class_means = torch.randn(self.num_classes, self.feature_dim)
 
@@ -60,7 +61,7 @@ class StochasticBlockModel():
             graph_label = graph_id % self.num_classes
 
 
-            graphs.append(Data(x=x, y = torch.tensor([graph_label]), edge_index = edge_index, node_labels=node_labels))
+            graphs.append(Data(x=x, y = torch.tensor([graph_label]), edge_index =edge_index, node_labels=node_labels))
 
         return graphs
 
