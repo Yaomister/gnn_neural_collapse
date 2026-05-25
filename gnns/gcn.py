@@ -1,9 +1,9 @@
-from torch.nn import ModuleList, Linear
+from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv, global_mean_pool
 
 
-class GCN:
+class GCN(Module):
     def __init__(self, in_dim, hidden_layer_dim, num_hidden_layers, num_classes):
         super().__init__()
         self.conv_layers = ModuleList()

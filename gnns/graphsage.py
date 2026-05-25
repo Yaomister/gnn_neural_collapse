@@ -1,9 +1,9 @@
-from torch.nn import ModuleList, Linear
+from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
 from torch_geometric.nn import SAGEConv, global_mean_pool
 
 
-class GraphSAGE:
+class GraphSAGE(Module):
     def __init__(self, in_dim, num_classes, num_hidden_layers, hidden_layer_dim):
         super().__init__()
         self.conv_layers = ModuleList()
