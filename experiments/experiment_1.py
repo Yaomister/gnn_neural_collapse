@@ -1,9 +1,7 @@
 
 import torch
 import numpy as np
-from gnns.gcn import GCN
-from gnns.gat import GAT
-from gnns.graphsage import GraphSAGE
+from gnns.gcn import GCN, GAT, GraphSAGE
 from training import train
 import matplotlib.pyplot as plt
 from torch_geometric.datasets import TUDataset
