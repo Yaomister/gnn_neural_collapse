@@ -4,13 +4,12 @@ from torch_geometric.data import Data
 
 class StochasticBlockModel():
 
-    def __init__(self, num_nodes, num_classes,  homophily, feature_dim, density = 0.3, noise = 0.1):
+    def __init__(self, num_nodes, num_classes,  homophily, feature_dim, density = 0.3):
         self.num_nodes = num_nodes
         self.num_classes = num_classes
         self.homophily = homophily
         self.feature_dim = feature_dim
         self.density = density
-        self.noise = noise
         # treating the fraction of same class pairs as 1 instead of 1/c (shouldn't matter)
 
         self.p_in = homophily * density
@@ -56,7 +55,7 @@ class StochasticBlockModel():
             x = torch.zeros(self.num_nodes, self.feature_dim)
             for c in range(self.num_classes):
                 mask = (node_labels == c)
-                x[mask] = class_means[c] + self.noise * torch.random(mask.sum(), self.feature_dim)
+                x[mask] = torch.randn(mask.sum(), self.feature_dim)
 
             graph_label = graph_id % self.num_classes
 
