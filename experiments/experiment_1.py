@@ -1,8 +1,7 @@
-
 import torch
 import numpy as np
-from gnns import GCN, GAT, GraphSAGE
 from training import train
+from utils import models_list
 import matplotlib.pyplot as plt
 from torch_geometric.datasets import TUDataset
 
@@ -17,17 +16,13 @@ def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
 
     results = {}
 
-    for model_name, ModelClass in [
-        ("GCN", GCN),
-        ("GAT", GAT),
-        ("GraphSAGE", GraphSAGE)
-    ]:
+    for model_name, ModelClass in models_list:
         print(f"training {model_name} on {dataset_name}")
 
         model = ModelClass(
             in_dim = in_dim,
             num_classes = num_classes,
-            num_hidden_layers = 8,
+            num_hidden_layers = 3,
             hidden_layer_dim = hidden_dim
         )
 
@@ -36,21 +31,28 @@ def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
         results[model_name] = metrics
 
     # plotting the results
-    fig, ax = plt.subplots(1, 2, figsize=(12, 4))
+    fig, ax = plt.subplots(1, 3, figsize=(18, 6))
 
     for model_name, history in results.items():
-        ax[0].plot(history['nc1'], history['epoch'])
-        ax[1].plot(history['nc2'], history['epoch'])
+        ax[0].plot(history['within_class_variance'], history['epoch'])
+        ax[1].plot(history['class_mean_norms'], history['epoch'])
+        ax[2].plot(history['class_mean_angles'], history['epoch'])
+
 
     ax[0].set_xlabel("Epoch")
-    ax[0].set_ylabel('NC1')
-    ax[0].set_title(f"NC1 over training with {dataset_name}")
+    ax[0].set_ylabel('Within-Class Variance')
+    ax[0].set_title(f"Within-Class Variance (NC1) over training with {dataset_name}")
     ax[0].legend()
 
     ax[1].set_xlabel("Epoch")
-    ax[1].set_ylabel("NC2")
-    ax[1].set_title(f"NC2 over training with {dataset_name}")
+    ax[1].set_ylabel("Class Mean Norms")
+    ax[1].set_title(f"Class Mean Norms (NC2) over training with {dataset_name}")
     ax[1].legend()
+
+    ax[2].set_xlabel("Epoch")
+    ax[2].set_ylabel("Class Mean Angles")
+    ax[2].set_title(f"Class Mean Angles (NC2) over training with {dataset_name}")
+    ax[2].legend()
 
     plt.savefig(f"figures/experiment_1_{dataset_name}.pdf", dpi=300)
     plt.show()
@@ -60,10 +62,3 @@ def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
 
 
     
-
-
-
-
-
-if __name__ == "__main__":
-    run(mutag, "MUTAG")
