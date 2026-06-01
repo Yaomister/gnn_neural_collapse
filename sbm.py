@@ -2,6 +2,14 @@ import torch
 import numpy as np
 from torch_geometric.data import Data
 
+
+composition = torch.tensor([
+    [0.10, 0.10, 0.80],  
+    [0.30, 0.30, 0.40],  
+    [0.50, 0.40, 0.10],
+])
+
+
 class StochasticBlockModel():
 
     # fixing density at 0.5
@@ -26,12 +34,22 @@ class StochasticBlockModel():
         
         for graph_id in range(num_graphs):
             node_labels = torch.zeros(self.num_nodes, dtype=torch.long)
+            graph_label = graph_id % self.num_classes
+            proportions = composition[graph_label]
 
+            counts = (proportions * self.num_nodes).round().long()
+            # fix the rounding (trust up to k-1)
+            counts[-1] = self.num_nodes - counts[:-1].sum()
+
+            # assign node class labels
+            node_labels = torch.cat([torch.full(counts[c], c) for c in range(self.num_classes)])
+            
+            x = torch.zeros(self.num_nodes, self.feature_dim)
             for c in range(self.num_classes):
-                start = c * self.nodes_per_class
-                end = ((c + 1) * self.nodes_per_class) if c < self.num_classes - 1 else self.num_nodes
-                node_labels[start:end] = c
-
+                mask = (x == c)
+                noise =  torch.randn(mask.sum(), self.feature_dim) * self.noise
+                x[mask] =  self.class_means[c] + noise
+                
 
             edges = []
 
@@ -49,17 +67,6 @@ class StochasticBlockModel():
                 edges = [[0, 0]]
 
             edge_index = torch.tensor(edges, dtype=torch.long).T
-
-
-            class_means = torch.randn(self.num_classes, self.feature_dim)
-
-            x = torch.zeros(self.num_nodes, self.feature_dim)
-            for c in range(self.num_classes):
-                mask = (node_labels == c)
-                noise =  torch.randn(mask.sum(), self.feature_dim) * self.noise
-                x[mask] = self.class_means[c] + noise
-
-            graph_label = graph_id % self.num_classes
 
 
             graphs.append(Data(x=x, y = torch.tensor([graph_label]), edge_index =edge_index, node_labels=node_labels))
