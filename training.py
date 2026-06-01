@@ -7,7 +7,8 @@ from nc import calculate_metrics
 
 
 
-def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_decay = 1e-4, measure_interval = 50):
+# following the learning rate defined in the paper
+def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
 
     loader = DataLoader(dataset = graphs, batch_size=32, shuffle=True)
 
@@ -19,12 +20,12 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
 
     record = {
         "epoch" : [],
-        "nc1": [],
-        "nc2" : [],
+        "within_class_variance": [],
+        "class_mean_norms" : [],
+        "class_mean_angles" : [],
         "training_loss": [],
         "training_accuracy": []
     }
-    
 
     model.train()
 
@@ -35,8 +36,6 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
 
         for batch in loader:
             optimizer.zero_grad()
-            # print(batch.edge_index)
-            # print(batch.edge_index.shape)
 
             logits, graph_representation = model(batch.x, batch.edge_index, batch.batch)
 
@@ -58,8 +57,9 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-4, weight_d
             nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
 
             record["epoch"].append(epoch)
-            record["nc1"].append(nc1)
-            record['nc2'].append(nc2)
+            record["within_class_variance"].append(nc1["within_class_variance"])
+            record['class_mean_norms'].append(nc2['class_mean_norms'])
+            record['class_mean_angles'].append(nc2['class_mean_angles'])
             record['training_loss'].append(total_loss/ len(loader))
             record['training_accuracy'].append(correct/total)
 

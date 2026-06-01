@@ -4,22 +4,23 @@ from torch_geometric.data import Data
 
 class StochasticBlockModel():
 
-    def __init__(self, num_nodes, num_classes,  homophily, feature_dim, density = 0.3):
+    # fixing density at 0.5
+    def __init__(self, num_nodes, num_classes,  homophily, feature_dim, noise, density = 0.5):
         self.num_nodes = num_nodes
         self.num_classes = num_classes
         self.homophily = homophily
         self.feature_dim = feature_dim
         self.density = density
+        self.noise = noise
+        self.class_means = torch.randn(num_classes, feature_dim)
         # treating the fraction of same class pairs as 1 instead of 1/c (shouldn't matter)
 
         self.p_in = homophily * density
-        # solved out based on the equation density == p_in + (c - 1)p_out
+        # solved out based on the equation density ≈ (1/c)·p_in + (1 - 1/c)·p_out
         self.p_out =   (1 - homophily) * density / (num_classes - 1) if num_classes > 1 else 0
 
         self.nodes_per_class = num_nodes // num_classes
 
-        
-    
     def generate(self, num_graphs):
         graphs = []
         
@@ -27,8 +28,8 @@ class StochasticBlockModel():
             node_labels = torch.zeros(self.num_nodes, dtype=torch.long)
 
             for c in range(self.num_classes):
-                start = c * self.num_classes
-                end = ((c + 1) * self.num_classes) if c < self.num_classes - 1 else self.num_nodes
+                start = c * self.nodes_per_class
+                end = ((c + 1) * self.nodes_per_class) if c < self.num_classes - 1 else self.num_nodes
                 node_labels[start:end] = c
 
 
@@ -55,7 +56,8 @@ class StochasticBlockModel():
             x = torch.zeros(self.num_nodes, self.feature_dim)
             for c in range(self.num_classes):
                 mask = (node_labels == c)
-                x[mask] = torch.randn(mask.sum(), self.feature_dim)
+                noise =  torch.randn(mask.sum(), self.feature_dim) * self.noise
+                x[mask] = self.class_means[c] + noise
 
             graph_label = graph_id % self.num_classes
 
