@@ -15,14 +15,16 @@ class GraphSAGE(Module):
         self.classifier = Linear(in_dim=hidden_layer_dim, out_features=num_classes)
 
     def forward(self, x, batch, edge_index):
+        intermediate_layers = []
         for layer in self.conv_layers:
             x = layer(x, edge_index)
             x = F.relu(x)
+            intermediate_layers.append(x)
 
         graph_representation = global_mean_pool(x, batch)
 
         x = self.classifier(graph_representation)
 
-        return x, graph_representation
+        return x, graph_representation, intermediate_layers
 
             

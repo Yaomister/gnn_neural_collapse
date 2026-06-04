@@ -15,12 +15,14 @@ class GCN(Module):
 
 
     def forward(self, x, edge_index, batch):
+        intermediate_layers = []
         for layer in self.conv_layers:
             x = layer(x, edge_index)
             x = F.relu(x)
+            intermediate_layers.append(x)
             
         graph_representation = global_mean_pool(x, batch)
 
         x = self.classifier(graph_representation)
 
-        return x, graph_representation
+        return x, graph_representation, intermediate_layers

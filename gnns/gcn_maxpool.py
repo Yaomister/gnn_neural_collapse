@@ -13,14 +13,16 @@ class GCN_Max_Pool():
         self.classifier = Linear(in_features=hidden_layer_dim, out_features=num_classes)
             
     def forward(self, x, edge_index, batch):
+        intermediate_layers = []
         for layer in self.layers:
             x = layer(x, edge_index)
             x = F.relu(x)
+            intermediate_layers.append(x)
 
         graph_representation = global_max_pool(x)
 
         x = self.classifier(graph_representation)
         
-        return x, graph_representation
+        return x, graph_representation, intermediate_layers
 
         

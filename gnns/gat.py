@@ -12,13 +12,15 @@ class GAT(Module):
         self.classifier = Linear(in_dim=hidden_layers_dim, out_features=num_classes)
 
     def forwrd(self, x, edge_index, batch):
+        intermediate_layers = []
         for layer in self.layers:
             x = layer(x, edge_index)
             x = F.relu(x)
+            intermediate_layers.append(x)
         # does the batch thing and returns one vector per graph
         graph_representation = global_mean_pool(x, batch)
 
         x = self.classifier(graph_representation)
 
-        return x, graph_representation
+        return x, graph_representation, intermediate_layers
         
