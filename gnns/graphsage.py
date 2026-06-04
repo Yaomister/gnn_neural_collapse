@@ -1,10 +1,10 @@
 from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
-from torch_geometric.nn import SAGEConv, global_mean_pool
+from torch_geometric.nn import SAGEConv, global_mean_pool, global_max_pool
 
 
 class GraphSAGE(Module):
-    def __init__(self, in_dim, num_classes, num_hidden_layers, hidden_layer_dim):
+    def __init__(self, in_dim, num_classes, num_hidden_layers, hidden_layer_dim, pool):
         super().__init__()
         self.conv_layers = ModuleList()
         self.conv_layers.append(SAGEConv(in_channels=in_dim, out_channels=hidden_layer_dim))
@@ -12,6 +12,7 @@ class GraphSAGE(Module):
         for _ in range(num_hidden_layers - 1):
             self.conv_layers.append(SAGEConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim))
 
+        self.pool = pool
         self.classifier = Linear(in_dim=hidden_layer_dim, out_features=num_classes)
 
     def forward(self, x, batch, edge_index):
@@ -20,8 +21,13 @@ class GraphSAGE(Module):
             x = layer(x, edge_index)
             x = F.relu(x)
             intermediate_layers.append(x)
-
-        graph_representation = global_mean_pool(x, batch)
+   
+        if self.pool == "mean":
+            graph_representation = global_mean_pool(x, batch)
+        elif self.pool == "max":
+            graph_representation = global_max_pool(x, batch)
+        else:
+            raise ValueError(f"unknown pool {self.pool}")
 
         x = self.classifier(graph_representation)
 

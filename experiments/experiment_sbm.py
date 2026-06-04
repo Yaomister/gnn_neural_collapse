@@ -1,7 +1,6 @@
 from training import train
 from utils import models_list
 import matplotlib.pyplot as plt
-from torch_geometric.datasets import TUDataset
 from sbm import StochasticBlockModel
 
 
@@ -10,7 +9,6 @@ def run(hidden_dim = 64, num_epochs = 3000):
 
     results = {}
 
-
     # the embedding dimensions of the SBM generated graphs
     in_dim = 16
     
@@ -18,22 +16,24 @@ def run(hidden_dim = 64, num_epochs = 3000):
     noise = [0.3, 0.6, 0.9]
 
     for model_name, ModelClass in models_list:
-        for h in homophily:
-            for n in noise:
+         for pool in ["max", "mean"]:
+            model_name = f"{model_name}_{pool}"
+            for h in homophily:
+                for n in noise:
 
-                sbm = StochasticBlockModel(num_nodes=50, num_graph_classes=3, num_node_classes=3, homophily=h, feature_dim=in_dim, noise=n)
-                model = ModelClass(
-                    in_dim = in_dim, 
-                    hidden_layer_dim = hidden_dim, 
-                    num_classes = 3, 
-                    num_hidden_layers = 3
-                ) 
+                    sbm = StochasticBlockModel(num_nodes=50, num_graph_classes=3, num_node_classes=3, homophily=h, feature_dim=in_dim, noise=n)
+                    model = ModelClass(
+                        in_dim = in_dim, 
+                        hidden_layer_dim = hidden_dim, 
+                        num_classes = 3, 
+                        num_hidden_layers = 3
+                    ) 
 
-                graphs = sbm.generate(1000)
+                    graphs = sbm.generate(1000)
 
-                metrics = train(model=model, graphs=graphs, num_classes=3, num_epochs=num_epochs)
+                    metrics = train(model=model, graphs=graphs, num_classes=3, num_epochs=num_epochs)
 
-                results[f"{model_name}_h{h}_n{n}"] = metrics
+                    results[f"{model_name}_h{h}_n{n}"] = metrics
 
     for title, entry in results.items():
         fig, axs = plt.subplots(1, 3, figsize=(18, 6))

@@ -1,16 +1,16 @@
 from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool
+from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool
 
 
 class GCN(Module):
-    def __init__(self, in_dim, hidden_layer_dim, num_hidden_layers, num_classes):
+    def __init__(self, in_dim, hidden_layer_dim, num_hidden_layers, num_classes, pool):
         super().__init__()
         self.conv_layers = ModuleList()
         self.conv_layers.append(GCNConv(in_channels=in_dim, out_channels=hidden_layer_dim))
         for _ in range(num_hidden_layers - 1):
             self.conv_layers.append(GCNConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim))
-        
+        self.pool = pool
         self.classifier = Linear(in_features=hidden_layer_dim, out_features=num_classes)
 
 
@@ -20,9 +20,14 @@ class GCN(Module):
             x = layer(x, edge_index)
             x = F.relu(x)
             intermediate_layers.append(x)
-            
-        graph_representation = global_mean_pool(x, batch)
 
+        if self.pool == "mean":
+            graph_representation = global_mean_pool(x, batch)
+        elif self.pool == "max":
+            graph_representation = global_max_pool(x, batch)
+        else:
+            raise ValueError(f"unknown pool {self.pool}")
+            
         x = self.classifier(graph_representation)
 
         return x, graph_representation, intermediate_layers
