@@ -16,9 +16,10 @@ class GAT(Module):
 
     def forward(self, x, edge_index, batch):
         intermediate_layers = []
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
             x = layer(x, edge_index)
-            x = F.relu(x)
+            if i < len(self.layers):
+                x = F.relu(x)
             intermediate_layers.append(x)
         if self.pool == "mean":
             graph_representation = global_mean_pool(x, batch)

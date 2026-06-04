@@ -9,7 +9,7 @@ from dirichlet_energy import calculate_dirichlet_energy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # following the learning rate defined in the paper
-def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
+def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
 
     loader = DataLoader(dataset = graphs, batch_size=32, shuffle=True)
 
@@ -26,7 +26,6 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
         "class_mean_angles" : [],
         "training_loss": [],
         "training_accuracy": [],
-        "dirichlet_energies_at_intermediate_layers": []
     }
 
     model.to(device)
@@ -59,8 +58,11 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
             all_representation, all_true_labels = _measure_neural_collapse(model, graphs)
 
             nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
-
-            dirichlet_energies_at_intermediate_layers = _measure_dirichlet_energy(model, graphs, num_layers=len(model.layers))
+            if (measure_energy):
+                if "dirichlet_energies_at_intermediate_layers" not in record:
+                    record["dirichlet_energies_at_intermediate_layers"] = []
+                dirichlet_energies_at_intermediate_layers = _measure_dirichlet_energy(model, graphs, num_layers=len(model.layers))
+                record['dirichlet_energies_at_intermediate_layers'].append(dirichlet_energies_at_intermediate_layers)
 
             record["epoch"].append(epoch)
             record["within_class_variance"].append(nc1["within_class_variance"])
@@ -68,7 +70,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
             record['class_mean_angles'].append(nc2['class_mean_angles'])
             record['training_loss'].append(total_loss/ len(loader))
             record['training_accuracy'].append(correct/total)
-            record['dirichlet_energies_at_intermediate_layers'].append(dirichlet_energies_at_intermediate_layers)
+            
 
             print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | within class variance : {record['within_class_variance'][-1]:.4f} | class mean norms : {record['class_mean_norms'][-1]:.4f} | class mean angles : {record['class_mean_angles'][-1]:.4f}")
 

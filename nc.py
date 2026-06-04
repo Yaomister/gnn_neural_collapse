@@ -63,7 +63,7 @@ def calculate_metrics(features : torch.Tensor, labels, num_classes):
     nc2_angle_spread = np.mean(angle_spread)
 
     norms = centered_class_means.norm(dim=1)
-    nc2_norm_std = np.std(norms).item()
+    nc2_norm_std = norms.std().item()
 
 
     return {"within_class_variance": nc1}, {"class_mean_angles" : nc2_angle_spread, "class_mean_norms": nc2_norm_std}
