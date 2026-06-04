@@ -46,7 +46,7 @@ def run_one_job(job):
         )
         tag = f"exp2_{job['model_name']}_h{job['homophily']}_n{job['noise']}_{job['pool']}"
 
-    torxh.save(result, f"results/{tag}.pt")
+    torch.save(result, f"results/{tag}.pt")
     print(f"finished {tag}")
 
 
