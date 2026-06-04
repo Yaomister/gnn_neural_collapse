@@ -4,7 +4,7 @@ from training import train
 from utils import models_list
 import matplotlib.pyplot as plt
 
-def run(dataset, dataset_name, model_name, pool, hidden_dim = 64, num_epochs = 5000):
+def run(dataset, dataset_name, model_name, pool, hidden_dim = 512, num_epochs = 5000):
 
     num_classes = dataset.num_classes
     in_dim = dataset.num_node_features
