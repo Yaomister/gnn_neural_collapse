@@ -6,7 +6,7 @@ from torch_geometric.loader import DataLoader
 from nc import calculate_metrics
 from dirichlet_energy import calculate_dirichlet_energy
 
-
+device = torch.device("gpu" if torch.cuda.is_available() else "cpu")
 
 # following the learning rate defined in the paper
 def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
@@ -29,6 +29,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
         "dirichlet_energies_at_intermediate_layers": []
     }
 
+    model.to(device)
     model.train()
 
     for epoch in range(num_epochs):
@@ -37,6 +38,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
         correct = 0
 
         for batch in loader:
+            batch.to(device)
             optimizer.zero_grad()
 
             logits, graph_representation, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
@@ -80,10 +82,12 @@ def _measure_neural_collapse(model, graphs):
     all_graph_representations = []
     all_true_labels = []
 
+    model.to(device)
     model.eval()
 
     with torch.no_grad():
         for batch in loader:
+            batch.to(device)
             _, graph_representation, _ = model(batch.x, batch.edge_index, batch.batch)
             all_graph_representations.append(graph_representation)
             all_true_labels.append(batch.y)
@@ -102,10 +106,12 @@ def _measure_dirichlet_energy(model, graphs, num_layers):
 
     n = 0
 
+    model.to(device)
     model.eval()
 
     with torch.no_grad:
         for batch in loader():
+            batch.to(device)
             _, _, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
             for l, layer in enumerate(intermediate_layers):
                 w, b = calculate_dirichlet_energy(layer, batch.edge_index, batch.node_labels)

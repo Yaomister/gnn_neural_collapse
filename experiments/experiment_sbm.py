@@ -26,7 +26,8 @@ def run(hidden_dim = 64, num_epochs = 3000):
                         in_dim = in_dim, 
                         hidden_layer_dim = hidden_dim, 
                         num_classes = 3, 
-                        num_hidden_layers = 3
+                        num_hidden_layers = 3,
+                        pool= pool
                     ) 
 
                     graphs = sbm.generate(1000)
@@ -64,7 +65,7 @@ def run(hidden_dim = 64, num_epochs = 3000):
         for l in range(num_layers):
             axs[l].plot(entry["epoch"], [energies[e][l][0] for e in range(len(epochs))], label = "within-class")
             axs[l].plot(entry["epoch"], [energies[e][l][1] for e in range(len(epochs))], label = "between-class")
-            axs.set_xlabel("Epoch")
+            axs[list].set_xlabel("Epoch")
             axs[l].set_ylabel("Dirichlet energy")
             axs[l].set_title(f"Layer {l+1}")
             axs[l].legend()

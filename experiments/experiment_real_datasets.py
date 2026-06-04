@@ -53,9 +53,8 @@ def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
         ax[2].legend()
 
         plt.savefig(f"figures/experiment_1_{dataset_name}.pdf", dpi=300)
-        plt.show()
 
-        return results
+    return results
 
 
 
