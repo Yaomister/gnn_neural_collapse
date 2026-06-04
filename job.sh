@@ -16,4 +16,4 @@ conda activate gnn
 
 cd $SLURM_SUBMIT_DIR
 
-python main.py
+python -u main.py
