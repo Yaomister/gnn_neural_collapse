@@ -4,14 +4,14 @@ from torch_geometric.nn import GATConv, global_mean_pool, global_max_pool
 
 
 class GAT(Module):
-    def __init__(self, in_dim, hidden_layers_dim, num_classes, num_hidden_layers, pool, num_heads=4):
+    def __init__(self, in_dim, hidden_layer_dim, num_classes, num_hidden_layers, pool, num_heads=4):
         super().__init__()
-        assert hidden_layers_dim % num_heads == 0
+        assert hidden_layer_dim % num_heads == 0
         self.layers = ModuleList()
-        self.layers.append(GATConv(in_channels=in_dim, out_channels=hidden_layers_dim // num_heads, heads=num_heads))
+        self.layers.append(GATConv(in_channels=in_dim, out_channels=hidden_layer_dim // num_heads, heads=num_heads))
         for _ in range(num_hidden_layers - 1):
-            self.layers.append(GATConv(in_channels=hidden_layers_dim, out_channels=hidden_layers_dim // num_heads, heads=num_heads))
-        self.classifier = Linear(in_features=hidden_layers_dim, out_features=num_classes)
+            self.layers.append(GATConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim // num_heads, heads=num_heads))
+        self.classifier = Linear(in_features=hidden_layer_dim, out_features=num_classes)
         self.pool = pool
 
     def forward(self, x, edge_index, batch):

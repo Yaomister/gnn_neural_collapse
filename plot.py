@@ -14,7 +14,7 @@ def load_results():
             results[tag] = torch.load(f"results/{tag}.pt")
     return results
 
-def find_tpt(record, threshold=0.999):
+def find_tpt(record, threshold=0.95):
     accs = record["training_accuracy"]
     epochs = record["epoch"]
     for i, a in enumerate(accs):
