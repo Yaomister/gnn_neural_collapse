@@ -10,7 +10,7 @@ def build_job_list():
 
     models = ["GCN", "GAT", "GraphSAGE"]
 
-    for ds_name in ["MUTAG", "PROTEINS", "ENZYMES"]:
+    for ds_name in ["ENZYMES"]:
         for model_name in models:
             for p in ["mean", "max"]:
                 jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p, "model_name" : model_name})
