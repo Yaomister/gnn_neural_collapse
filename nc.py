@@ -6,7 +6,8 @@ def calculate_metrics(features : torch.Tensor, labels, num_classes):
     # labels: (N,)
     # num_classes: C
 
-    features = features.float()
+    features = features.float().cpu()
+    labels = labels.cpu()
     feature_dimension = features.shape[1]
 
     class_means = []

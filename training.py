@@ -12,6 +12,11 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    if torch.cuda.is_available():
+        print("GPU:", torch.cuda.get_device_name(0), flush=True)
+    else:
+        print("RUNNING ON CPU", flush=True)
+
     loader = DataLoader(dataset = graphs, batch_size=32, shuffle=True)
 
     optimizer = Adam(
@@ -84,7 +89,7 @@ def _measure_neural_collapse(model, graphs):
     
     all_graph_representations = []
     all_true_labels = []
-    
+
     model.to(device)
     model.eval()
 

@@ -12,7 +12,7 @@ mkdir -p figures logs results
 
 module load miniconda3/25.9.1
 source $(conda info --base)/etc/profile.d/conda.sh
-conda activate gnn
+source activate base
 
 cd $SLURM_SUBMIT_DIR
 
