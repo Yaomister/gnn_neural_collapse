@@ -1,5 +1,3 @@
-import torch
-import numpy as np
 from training import train
 from utils import models_list
 import matplotlib.pyplot as plt
@@ -13,8 +11,9 @@ def run(hidden_dim = 64, num_epochs = 3000):
     results = {}
 
     num_classes = 3
-    # what was this again?
-    in_dim = 64
+
+    # the embedding dimensions of the SBM generated graphs
+    in_dim = 16
 
     homophily = [0.3, 0.6, 0.9]
     noise = [0.3, 0.6, 0.9]
@@ -22,7 +21,7 @@ def run(hidden_dim = 64, num_epochs = 3000):
     for model_name, ModelClass in models_list:
         for h in homophily:
             for n in noise:
-
+                
                 sbm = StochasticBlockModel(num_nodes=50, num_classes=num_classes, homophily=h, feature_dim=hidden_dim, noise=n)
                 model = ModelClass(
                     in_dim = in_dim, 
@@ -33,11 +32,9 @@ def run(hidden_dim = 64, num_epochs = 3000):
 
                 graphs = sbm.generate(1000)
 
-
                 metrics = train(model=model, graphs=graphs, num_classes=3, num_epochs=num_epochs)
 
                 results[f"{model_name}_h{h}_n{n}"] = metrics
-    
 
     for title, entry in results.items():
         fig, axs = plt.subplots(1, 3, figsize=(18, 6))
