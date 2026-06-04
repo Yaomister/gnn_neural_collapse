@@ -24,9 +24,7 @@ def run(dataset, dataset_name, model_name, pool, hidden_dim = 512, num_epochs = 
 
     metrics = train(model, graphs=list(dataset), num_classes=num_classes, num_epochs=num_epochs)
 
-    results[model_name] = metrics
-
-    return results
+    return metrics
 
 
 

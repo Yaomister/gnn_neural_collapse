@@ -10,23 +10,23 @@ def build_job_list():
 
     models = ["GCN", "GAT", "GraphSAGE"]
 
-    for ds_name in ["ENZYMES"]:
-        for model_name in models:
-            for p in ["mean", "max"]:
-                jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p, "model_name" : model_name})
+    # for ds_name in ["ENZYMES"]:
+    #     for model_name in models:
+    #         for p in ["mean", "max"]:
+    #             jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p, "model_name" : model_name})
 
-    # homophily = [0.3, 0.6, 0.9]
-    # noise = [0.3, 0.6, 0.9]
-    # pools = ["mean", "max"]
-    # for m in models:
-    #     for h in homophily:
-    #         for n in noise:
-    #             for p in pools:
-    #                 jobs.append({
-    #                     "experiment": 2,
-    #                     "model_name": m, "homophily": h,
-    #                     "noise": n, "pool": p,
-    #                 })
+    homophily = [0.3, 0.6, 0.9]
+    noise = [0.3, 0.6, 0.9]
+    pools = ["mean", "max"]
+    for m in models:
+        for h in homophily:
+            for n in noise:
+                for p in pools:
+                    jobs.append({
+                        "experiment": 2,
+                        "model_name": m, "homophily": h,
+                        "noise": n, "pool": p,
+                    })
     return jobs
 
 

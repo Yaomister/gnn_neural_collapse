@@ -11,7 +11,7 @@ def load_results():
     for file_name in os.listdir("results"):
         if file_name.endswith(".pt"):
             tag = file_name[:-3]
-            results[tag] = torch.load(f"results/{tag}.pt")
+            results[tag] = torch.load(f"results/{tag}.pt", weights_only=False)
     return results
 
 def find_tpt(record, threshold=0.95):
