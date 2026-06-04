@@ -19,7 +19,7 @@ class GraphSAGE(Module):
         intermediate_layers = []
         for i, layer in enumerate(self.layers):
             x = layer(x, edge_index)
-            if i < len(self.layers):
+            if i < len(self.layers) - 1:
                 x = F.relu(x)
             intermediate_layers.append(x)
    
