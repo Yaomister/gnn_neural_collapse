@@ -38,7 +38,7 @@ def calculate_metrics(features : torch.Tensor, labels, num_classes):
         diff = diff.unsqueeze(1)
         # we want (d, d) again
         between_class_covaraince += diff @ diff.T
-    between_class_covaraince / num_classes
+    between_class_covaraince /= num_classes
 
     between_class_covaraince_partial_inverse = torch.linalg.pinv(between_class_covaraince)
 

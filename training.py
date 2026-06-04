@@ -6,7 +6,7 @@ from torch_geometric.loader import DataLoader
 from nc import calculate_metrics
 from dirichlet_energy import calculate_dirichlet_energy
 
-device = torch.device("gpu" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # following the learning rate defined in the paper
 def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
@@ -38,7 +38,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
         correct = 0
 
         for batch in loader:
-            batch.to(device)
+            batch = batch.to(device)
             optimizer.zero_grad()
 
             logits, graph_representation, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
@@ -60,7 +60,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
 
             nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
 
-            dirichlet_energies_at_intermediate_layers = _measure_dirichlet_energy(model, graphs, num_layers=len(model.conv_layers))
+            dirichlet_energies_at_intermediate_layers = _measure_dirichlet_energy(model, graphs, num_layers=len(model.layers))
 
             record["epoch"].append(epoch)
             record["within_class_variance"].append(nc1["within_class_variance"])
@@ -70,7 +70,7 @@ def train(model, graphs, num_classes, num_epochs, learning_rate = 1e-3, weight_d
             record['training_accuracy'].append(correct/total)
             record['dirichlet_energies_at_intermediate_layers'].append(dirichlet_energies_at_intermediate_layers)
 
-            print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | within class variance : {record["within_class_variance"][-1]:.4f} | class mean norms : {record["class_mean_norms"][-1]:.4f} | class mean angles : {record["class_mean_angles"][-1]:.4f}")
+            print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | within class variance : {record['within_class_variance'][-1]:.4f} | class mean norms : {record['class_mean_norms'][-1]:.4f} | class mean angles : {record['class_mean_angles'][-1]:.4f}")
 
     return record
 
@@ -87,7 +87,7 @@ def _measure_neural_collapse(model, graphs):
 
     with torch.no_grad():
         for batch in loader:
-            batch.to(device)
+            batch = batch.to(device)
             _, graph_representation, _ = model(batch.x, batch.edge_index, batch.batch)
             all_graph_representations.append(graph_representation)
             all_true_labels.append(batch.y)
@@ -109,9 +109,9 @@ def _measure_dirichlet_energy(model, graphs, num_layers):
     model.to(device)
     model.eval()
 
-    with torch.no_grad:
-        for batch in loader():
-            batch.to(device)
+    with torch.no_grad():
+        for batch in loader:
+            batch = batch.to(device)
             _, _, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
             for l, layer in enumerate(intermediate_layers):
                 w, b = calculate_dirichlet_energy(layer, batch.edge_index, batch.node_labels)
@@ -122,5 +122,5 @@ def _measure_dirichlet_energy(model, graphs, num_layers):
 
     model.train()
 
-    return [[within_totals[l]/n, between_totals[l]/n] for l in num_layers]
+    return [[within_totals[l]/n, between_totals[l]/n] for l in range(num_layers)]
                                       
