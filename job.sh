@@ -8,11 +8,11 @@
 #SBATCH --output=logs/%x_%j.out
 #SBATCH --error=logs/%x_%j.err
 
-
 mkdir -p figures logs results
 
-module load anaconda3
-source activate myenv
+module load miniconda3/25.9.1
+source $(conda info --base)/etc/profile.d/conda.sh
+conda activate gnn
 
 cd $SLURM_SUBMIT_DIR
 
