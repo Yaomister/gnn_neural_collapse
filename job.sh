@@ -12,7 +12,6 @@
 mkdir -p figures logs results
 
 module load anaconda3
-
 source activate myenv
 
 cd $SLURM_SUBMIT_DIR

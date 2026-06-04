@@ -8,7 +8,8 @@ def build_job_list():
     jobs = []
 
     for ds_name in ["MUTAG", "PROTEINS", "ENZYMES"]:
-        jobs.append({"experiment": 1, "dataset_name": ds_name})
+        for p in ["mean", "max"]:
+            jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p})
 
     models = ["GCN", "GAT", "GraphSAGE"]
     homophily = [0.3, 0.6, 0.9]
@@ -31,7 +32,7 @@ def run_one_job(job):
 
     if job["experiment"] == 1:
         ds = TUDataset(root="data/", name=job["dataset_name"])
-        result = run_1(dataset=ds, dataset_name=job["dataset_name"])
+        result = run_1(dataset=ds, dataset_name=job["dataset_name"], pool=job['pool'])
         tag = f"exp1_{job['dataset_name']}"
 
     else:
