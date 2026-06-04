@@ -6,7 +6,12 @@ from torch_geometric.loader import DataLoader
 from nc import calculate_metrics
 from dirichlet_energy import calculate_dirichlet_energy
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print("CUDA available:", torch.cuda.is_available(), flush=True)
+
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0), flush=True)
+else:
+    print("RUNNING ON CPU", flush=True)
 
 # following the learning rate defined in the paper
 def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
