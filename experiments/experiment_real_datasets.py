@@ -3,11 +3,6 @@ import numpy as np
 from training import train
 from utils import models_list
 import matplotlib.pyplot as plt
-from torch_geometric.datasets import TUDataset
-
-
-mutag = TUDataset(root="data/", name= "MUTAG")
-proteins = TUDataset(root="data/", name = "PROTEINS")
 
 def run(dataset, dataset_name, hidden_dim = 64, num_epochs = 3000):
 
