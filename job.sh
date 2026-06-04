@@ -16,4 +16,9 @@ conda activate gnn
 
 cd $SLURM_SUBMIT_DIR
 
+echo "JOB STARTED"
+pwd
+which python
+python --version
+
 python -u main.py
