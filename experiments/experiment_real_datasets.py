@@ -1,17 +1,16 @@
-
-import numpy as np
 from training import train
 from utils import models_list
-import matplotlib.pyplot as plt
 
+# Experiment 1: confirming neural collapse happens on real datasets (ENZYMES, MUTAG, PROTEINS)
 def run(dataset, dataset_name, model_name, pool, hidden_dim = 512, num_epochs = 3000):
-
+    # the number of classes of the datasets
     num_classes = dataset.num_classes
+    # the feature embedding dimensions
     in_dim = dataset.num_node_features
 
-    results = {}
     print(f"training {model_name} on {dataset_name}")
 
+    # load each model
     model = models_list[model_name](
         in_dim = in_dim,
         num_classes = num_classes,
@@ -20,8 +19,7 @@ def run(dataset, dataset_name, model_name, pool, hidden_dim = 512, num_epochs = 
         pool=pool
     )
 
-    model_name = f"{model_name}_{pool}_{dataset_name}"
-
+    # train the model till TPT
     metrics = train(model, graphs=list(dataset), num_classes=num_classes, num_epochs=num_epochs)
 
     return metrics

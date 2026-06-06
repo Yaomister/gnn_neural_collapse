@@ -8,6 +8,7 @@ class GCN(Module):
         super().__init__()
         self.layers = ModuleList()
         self.layers.append(GCNConv(in_channels=in_dim, out_channels=hidden_layer_dim))
+        # add the hidden layers
         for _ in range(num_hidden_layers - 1):
             self.layers.append(GCNConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim))
         self.pool = pool
@@ -18,6 +19,7 @@ class GCN(Module):
         intermediate_layers = []
         for i, layer in enumerate(self.layers):
             x = layer(x, edge_index)
+            # apply RELU except for the final layer
             if i < len(self.layers) - 1:
                 x = F.relu(x)
             intermediate_layers.append(x)
@@ -30,5 +32,5 @@ class GCN(Module):
             raise ValueError(f"unknown pool {self.pool}")
             
         x = self.classifier(graph_representation)
-
+        # return the logits, the node feature vectors before the final classifier, and the intermediate layers
         return x, graph_representation, intermediate_layers

@@ -7,9 +7,9 @@ from nc import calculate_metrics
 from dirichlet_energy import calculate_dirichlet_energy
 
 
-# following the learning rate defined in the paper
 def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-5, measure_interval = 50):
 
+    # move everything to GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if torch.cuda.is_available():
@@ -17,8 +17,10 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
     else:
         print("RUNNING ON CPU", flush=True)
 
+    # load the training dataset
     loader = DataLoader(dataset = graphs, batch_size=32, shuffle=True)
 
+    # define ADAM optimizer with learning rate and weight decay
     optimizer = Adam(
         params = model.parameters(),
         lr = learning_rate,
@@ -37,6 +39,7 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
     model.to(device)
     model.train()
 
+    # training loop
     for epoch in range(num_epochs):
         total_loss = 0
         total = 0
@@ -46,7 +49,7 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
             batch = batch.to(device)
             optimizer.zero_grad()
 
-            logits, graph_representation, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
+            logits, _, _ = model(batch.x, batch.edge_index, batch.batch)
 
             loss = F.cross_entropy(logits, batch.y)
             loss.backward()
@@ -56,14 +59,18 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
             total_loss += loss.item()
             
             prediction = logits.argmax(dim= 1)
-
+            
+            # keep track of training loss and training accuracy
             total += batch.y.size(0)
             correct += (prediction == batch.y).sum().item()
 
+        # when we want to log the training statistics
         if (epoch % measure_interval == 0):
             all_representation, all_true_labels = _measure_neural_collapse(model, graphs)
 
+            # calculate NC metrics
             nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
+            # when we want to measure the Dirichlet energy (only for the synthetic graphs)
             if (measure_energy):
                 if "dirichlet_energies_at_intermediate_layers" not in record:
                     record["dirichlet_energies_at_intermediate_layers"] = []
@@ -77,12 +84,12 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
             record['training_loss'].append(total_loss/ len(loader))
             record['training_accuracy'].append(correct/total)
             
-
+            # print how its doing
             print(f"epoch : {epoch:4d} | loss : {total_loss / len(loader):.4f} | accuracy : {correct/total:.3f} | within class variance : {record['within_class_variance'][-1]:.4f} | class mean norms : {record['class_mean_norms'][-1]:.4f} | class mean angles : {record['class_mean_angles'][-1]:.4f}")
 
     return record
 
-
+# measure neural collapse metrics
 def _measure_neural_collapse(model, graphs):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = DataLoader(dataset=graphs, batch_size=64, shuffle=False)
@@ -104,8 +111,9 @@ def _measure_neural_collapse(model, graphs):
     return torch.cat(all_graph_representations), torch.cat(all_true_labels)
 
 
-
+# measure Dirichlet energy metrics
 def _measure_dirichlet_energy(model, graphs, num_layers):
+    # we have to use batches of 1, or else everything gets concatnated into one big graph, which messes up the split between within-class and between-class energies
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = DataLoader(dataset=graphs, batch_size=1, shuffle=False)
 
@@ -125,9 +133,7 @@ def _measure_dirichlet_energy(model, graphs, num_layers):
                 w, b = calculate_dirichlet_energy(layer, batch.edge_index, batch.node_labels)
                 within_totals[l] += w.item()
                 between_totals[l] += b.item()
-
             n += 1
-
     model.train()
 
     return [[within_totals[l]/n, between_totals[l]/n] for l in range(num_layers)]

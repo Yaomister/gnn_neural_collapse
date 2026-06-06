@@ -9,6 +9,7 @@ class GraphSAGE(Module):
         self.layers = ModuleList()
         self.layers.append(SAGEConv(in_channels=in_dim, out_channels=hidden_layer_dim))
         
+        # add convolution layers
         for _ in range(num_hidden_layers - 1):
             self.layers.append(SAGEConv(in_channels=hidden_layer_dim, out_channels=hidden_layer_dim))
 
@@ -19,6 +20,7 @@ class GraphSAGE(Module):
         intermediate_layers = []
         for i, layer in enumerate(self.layers):
             x = layer(x, edge_index)
+            # apply RELU except for the final layer
             if i < len(self.layers) - 1:
                 x = F.relu(x)
             intermediate_layers.append(x)
@@ -31,7 +33,7 @@ class GraphSAGE(Module):
             raise ValueError(f"unknown pool {self.pool}")
 
         x = self.classifier(graph_representation)
-
+        # return the logits, the final feature vectors before the linear classifier, and the intermediate layers
         return x, graph_representation, intermediate_layers
 
             
