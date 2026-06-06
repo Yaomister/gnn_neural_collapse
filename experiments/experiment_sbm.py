@@ -5,7 +5,7 @@ from sbm import StochasticBlockModel
 
 
 
-def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 200):
+def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 1000):
 
     results = {}
 
