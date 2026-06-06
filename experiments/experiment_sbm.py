@@ -5,7 +5,7 @@ from sbm import StochasticBlockModel
 
 
 
-def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 500):
+def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 200):
 
     results = {}
 
@@ -23,7 +23,7 @@ def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 500):
 
     graphs = sbm.generate(1000)
 
-    metrics = train(model=model, graphs=graphs, num_classes=3, num_epochs=num_epochs, measure_energy=True, measure_interval=1)
+    metrics = train(model=model, graphs=graphs, num_classes=3, num_epochs=num_epochs, measure_energy=True, measure_interval=5)
 
     return metrics
 

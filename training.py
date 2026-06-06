@@ -8,7 +8,7 @@ from dirichlet_energy import calculate_dirichlet_energy
 
 
 # following the learning rate defined in the paper
-def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-3, measure_interval = 50):
+def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-5, measure_interval = 50):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

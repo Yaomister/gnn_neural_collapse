@@ -14,13 +14,24 @@ def load_results():
             results[tag] = torch.load(f"results/{tag}.pt", weights_only=False)
     return results
 
-def find_tpt(record, threshold=0.95):
+def find_tpt(record, threshold=0.95, patience=5):
     accs = record["training_accuracy"]
     epochs = record["epoch"]
+    streak = 0
     for i, a in enumerate(accs):
-        if all(later >= threshold for later in accs[i:]):
-            return epochs[i]
+        streak = streak + 1 if a >= threshold else 0
+        if streak >= patience:
+            return epochs[i - patience + 1]
     return None
+
+def plot_nc_overlay(records_by_label, metric, ylabel, fname, logy=False):
+    fig, ax = plt.subplots(figsize=(6, 5))
+    for label, record in records_by_label.items():
+        ax.plot(record["epoch"], record[metric], label=label)
+    if logy: ax.set_yscale("log")
+    ax.set_xlabel("Epoch"); ax.set_ylabel(ylabel); ax.legend()
+    fig.savefig(f"figures/{fname}.pdf"); plt.close()
+
 
 def add_tpt_line(ax, tpt):
     if tpt is not None:
@@ -89,4 +100,10 @@ if __name__ == "__main__":
         plot_training(tag, record)
         if record.get("dirichlet_energies_at_intermediate_layers"):
             plot_energy(tag, record)
+
+    plot_nc_overlay(
+    {"mean": results["exp1_GCN_ENZYMES_mean"],
+     "max":  results["exp1_GCN_ENZYMES_max"]},
+    metric="within_class_variance", ylabel="NC1", fname="exp1_GCN_pool_compare", logy=True,
+    )
 
