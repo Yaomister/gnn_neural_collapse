@@ -33,7 +33,7 @@ def plot_nc_overlay(records_by_label, metric, ylabel, fname, logy=False):
         ax.plot(record["epoch"], record[metric], label=label)
     if logy: ax.set_yscale("log")
     ax.set_xlabel("Epoch"); ax.set_ylabel(ylabel); ax.legend()
-    fig.savefig(f"figures/{fname}"); plt.close()
+    fig.savefig(f"figures/{fname}.png"); plt.close()
 
 
 # add a red line to indicte when TPT has started
@@ -50,7 +50,7 @@ def plot_nc(tag, record):
 
     axs[0].plot(epochs, record["within_class_variance"])
     # axs[0].set_yscale("log")
-    axs[0].set_ylabel("NC1: within-class variance")
+    axs[0].set_ylabel("NC1: within-between-class variance ratio")
     axs[1].plot(epochs, record["class_mean_norms"]); axs[1].set_ylabel("NC2: norm standard deviation")
     axs[2].plot(epochs, record["class_mean_angles"]); axs[2].set_ylabel("NC2: equiangularity")
 
@@ -59,7 +59,7 @@ def plot_nc(tag, record):
         add_tpt_line(ax, tpt)
         ax.legend()
     fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_nc", dpi=300); plt.close()
+    plt.savefig(f"figures/{tag}_nc.png", dpi=300); plt.close()
 
 
 # plot the Dirichlet energy
@@ -85,7 +85,7 @@ def plot_energy(tag, record):
         axs[l].legend()
 
     fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_energy", dpi=300); plt.close()
+    plt.savefig(f"figures/{tag}_energy.png", dpi=300); plt.close()
 
 # plot the training loss and accuracy
 def plot_training(tag, record):
@@ -101,7 +101,7 @@ def plot_training(tag, record):
         add_tpt_line(ax, tpt)
         ax.legend()
     fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_training", dpi=300); plt.close()
+    plt.savefig(f"figures/{tag}_training.png", dpi=300); plt.close()
 
 if __name__ == "__main__":
     results = load_results()

@@ -6,6 +6,9 @@ def calculate_dirichlet_energy(graph_at_layer, edge_index, node_labels ):
     # edge_index: (2, number of edges for that graph)
     # node_labels: (number of nodes)
 
+    # normalize the node feature vectors so the values are not affected by the norms
+    graph_at_layer = graph_at_layer / (graph_at_layer.norm(dim=1, keepdim=True) + 1e-8)
+
     # the edge index's 0th row represent the starting point of edges, and the 1st row represent the end point of edges
     
     num_nodes = graph_at_layer.size(0)
