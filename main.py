@@ -35,8 +35,9 @@ def run_one_job(job):
 
     if job["experiment"] == 1:
         ds = TUDataset(root="data/", name=job["dataset_name"])
-        result = run_1(dataset=ds, dataset_name=job["dataset_name"], pool=job['pool'], model_name=job["model_name"])
         tag = f"exp1_{job['model_name']}_{job['dataset_name']}_{job['pool']}"
+        result = run_1(dataset=ds, dataset_name=job["dataset_name"], pool=job['pool'], model_name=job["model_name"])
+        print(f"running {tag}")
     else:
         result = run_2(
             model_name=job["model_name"],
