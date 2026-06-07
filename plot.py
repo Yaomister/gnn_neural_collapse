@@ -124,7 +124,7 @@ def plot_figure_3(results):
     homophily = [0.3, 0.6, 0.9]
     noise = [50, 20, 10]  
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    p = 'max'
+    p = 'mean'
 
     for j, n in enumerate(noise):
         for m in models:
@@ -195,6 +195,33 @@ def plot_figure_1(results):
         fig.savefig("figures/fig1.png", dpi=300); 
     
     plt.close()
+
+
+# make it plot both norms and angles
+def plot_figure_4(results):
+    models = ["GCN", "GAT", "GraphSAGE"]
+    homophily = [0.3, 0.6, 0.9]
+    noise = [50, 20, 10]    
+    pooling = ["max", "mean"]          
+
+    fig, axs = plt.subplots(2, 3, figsize=(15, 10), sharey=True)
+    for i, p in enumerate(pooling):
+        # swap for angle
+        axs[i, 0].set_ylabel(f"{p} pool\nNC2 : equiangularity")
+        for j, n in enumerate(noise):
+            for m in models:
+                means, stds = [], []
+                for h in homophily:
+                    value = results[f"exp2_{m}_h{h}_n{n}_{p}"]["class_mean_angles"][-10:]
+                    mu, sd = np.mean(value), np.std(value)
+                    means.append(mu); stds.append(sd)
+                axs[i, j].errorbar(homophily, means, yerr=stds, marker='o', capsize=3, label=m)
+            axs[i, j].set_title(f"noise = {n}")
+            axs[i, j].set_xlabel("homophily")
+            # axs[i, j].set_ylabel(r"NC1: within-class variance floor")
+            axs[i, j].legend()
+    fig.savefig(f"figures/fig4.png", dpi=300)
+    plt.close()
     
 if __name__ == "__main__":
     results = load_results()
@@ -206,9 +233,10 @@ if __name__ == "__main__":
     #     if record.get("dirichlet_energies_at_intermediate_layers"):
     #         plot_energy(tag, record)
 
-    plot_figure_1(results)
-    plot_figure_2(results)
-    plot_figure_3(results)
+    # plot_figure_1(results)
+    # plot_figure_2(results)
+    # plot_figure_3(results)
+    plot_figure_4(results)
  
 
 
