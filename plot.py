@@ -107,11 +107,44 @@ def plot_training(tag, record):
 
 
 
+def calculate_time_to_floor(record, frac=0.05):
+    variances = record['within_class_variance']
+    start = variances[0]
+    floor = np.mean(variances[-10:])
+    target = floor + frac * (start - floor)
+
+    for i, v in zip(record['epoch'], variances):
+        if v <= target:
+            return i
+    return record['epoch'][-1]
+
+
+def plot_figure_3(results):
+    models = ["GCN", "GAT", "GraphSAGE"]
+    homophily = [0.3, 0.6, 0.9]
+    noise = [50, 20, 10]  
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+    p = 'max'
+
+    for j, n in enumerate(noise):
+        for m in models:
+            ttf = [calculate_time_to_floor(results[f"exp2_{m}_h{h}_n{n}_{p}"]) for h in homophily]
+            axs[j].plot(homophily, ttf, marker='o', label=m)
+        axs[j].set_title(f"noise = {n}")
+        axs[j].set_xlabel("homophily")
+        axs[j].set_ylabel("the epoch within-class-variance plateaus")
+        axs[j].legend()
+    fig.savefig(f"figures/fig3_{p}.png", dpi=300)
+    plt.close()
+                  
+
+
+
 def plot_figure_2(results):
     models = ["GCN", "GAT", "GraphSAGE"]
     homophily = [0.3, 0.6, 0.9]
-    noise = [50, 20, 10]        # high -> low
-    p = 'mean'                  # your claim is about mean pooling
+    noise = [50, 20, 10]    
+    p = 'max'            
 
     fig, axs = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
     for j, n in enumerate(noise):
@@ -124,9 +157,9 @@ def plot_figure_2(results):
             axs[j].errorbar(homophily, means, yerr=stds, marker='o', capsize=3, label=m)
         axs[j].set_title(f"noise = {n}")
         axs[j].set_xlabel("homophily")
-        axs[j].set_ylabel(r"$\mathcal{NC}1$ floor")
+        axs[j].set_ylabel(r"NC1: within-class variance floor")
         axs[j].legend()
-    fig.savefig(f"figures/fig_homophily_{p}.png", dpi=300)
+    fig.savefig(f"figures/fig2_{p}.png", dpi=300)
     plt.close()
 
    
@@ -175,6 +208,7 @@ if __name__ == "__main__":
 
     plot_figure_1(results)
     plot_figure_2(results)
+    plot_figure_3(results)
  
 
 
