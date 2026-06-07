@@ -1,5 +1,6 @@
 import os
 import torch
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -103,19 +104,81 @@ def plot_training(tag, record):
     fig.suptitle(tag)
     plt.savefig(f"figures/{tag}_training.png", dpi=300); plt.close()
 
+
+
+
+def plot_figure_2(results):
+    models = ["GCN", "GAT", "GraphSAGE"]
+    homophily = [0.3, 0.6, 0.9]
+    noise = [50, 20, 10]        # high -> low
+    p = 'mean'                  # your claim is about mean pooling
+
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
+    for j, n in enumerate(noise):
+        for m in models:
+            means, stds = [], []
+            for h in homophily:
+                value = results[f"exp2_{m}_h{h}_n{n}_{p}"]["within_class_variance"][-10:]
+                mu, sd = np.mean(value), np.std(value)
+                means.append(mu); stds.append(sd)
+            axs[j].errorbar(homophily, means, yerr=stds, marker='o', capsize=3, label=m)
+        axs[j].set_title(f"noise = {n}")
+        axs[j].set_xlabel("homophily")
+        axs[j].set_ylabel(r"$\mathcal{NC}1$ floor")
+        axs[j].legend()
+    fig.savefig(f"figures/fig_homophily_{p}.png", dpi=300)
+    plt.close()
+
+   
+
+def plot_figure_1(results):
+    fig, axs = plt.subplots(2, 3, figsize=(25, 10), sharey="col")
+    models = [
+        {"GCN (mean pool)": "exp1_GCN_ENZYMES_mean",
+        "GAT (mean pool)": "exp1_GAT_ENZYMES_mean",
+        "GraphSAGE (mean pool)": "exp1_GraphSAGE_ENZYMES_mean"},
+        {
+        "GCN (max pool)": "exp1_GCN_ENZYMES_max",
+        "GAT (max pool)": "exp1_GAT_ENZYMES_max",
+        "GraphSAGE (max pool)": "exp1_GraphSAGE_ENZYMES_max",
+    }
+    ]
+
+    metrics = [
+        ("within_class_variance", "NC1: within-class variance"),
+        ("class_mean_angles", "NC2: equiangularity"),
+        ("class_mean_norms", "NC2: norm std")
+    ]
+
+    for i, model in enumerate(models):
+        for ax, (metric, ylabel) in zip(axs[i], metrics):
+            for label, tag in model.items():
+                r = results[tag]
+                ax.plot(r['epoch'], r[metric], label=label)
+            ax.set_xlabel("epoch")
+            ax.set_ylabel(ylabel)
+            ax.legend()
+        
+        fig.savefig("figures/fig1.png", dpi=300); 
+    
+    plt.close()
+    
 if __name__ == "__main__":
     results = load_results()
 
     # plot everything
-    for tag, record in results.items():
-        plot_nc(tag, record)
-        plot_training(tag, record)
-        if record.get("dirichlet_energies_at_intermediate_layers"):
-            plot_energy(tag, record)
+    # for tag, record in results.items():
+    #     plot_nc(tag, record)
+    #     plot_training(tag, record)
+    #     if record.get("dirichlet_energies_at_intermediate_layers"):
+    #         plot_energy(tag, record)
 
-    plot_nc_overlay(
-    {"mean": results["exp1_GCN_ENZYMES_mean"],
-     "max":  results["exp1_GCN_ENZYMES_max"]},
-    metric="within_class_variance", ylabel="NC1", fname="exp1_GCN_pool_compare", logy=False,
-    )
+    plot_figure_1(results)
+    plot_figure_2(results)
+ 
+
+
+
+
+    
 
