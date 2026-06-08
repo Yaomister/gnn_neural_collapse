@@ -32,6 +32,9 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
         "within_class_variance": [],
         "class_mean_norms" : [],
         "class_mean_angles" : [],
+        "last_layer_node_within_class_variance": [],
+        "last_layer_node_class_mean_norms" : [],
+        "last_layer_node_class_mean_angles" : [],
         "training_loss": [],
         "training_accuracy": [],
     }
@@ -66,10 +69,11 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
 
         # when we want to log the training statistics
         if (epoch % measure_interval == 0):
-            all_representation, all_true_labels = _measure_neural_collapse(model, graphs)
+            all_representation, all_true_labels, all_last_layer_node_features, all_last_layer_node_labels = _measure_neural_collapse(model, graphs)
 
             # calculate NC metrics
             nc1, nc2 = calculate_metrics(all_representation, all_true_labels, num_classes)
+            node_nc1, node_nc2 = calculate_metrics(all_last_layer_node_features, all_last_layer_node_labels, num_classes=3)
             # when we want to measure the Dirichlet energy (only for the synthetic graphs)
             if (measure_energy):
                 if "dirichlet_energies_at_intermediate_layers" not in record:
@@ -81,6 +85,9 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
             record["within_class_variance"].append(nc1["within_class_variance"])
             record['class_mean_norms'].append(nc2['class_mean_norms'])
             record['class_mean_angles'].append(nc2['class_mean_angles'])
+            record["last_layer_node_within_class_variance"].append(nc1["within_class_variance"])
+            record['last_layer_node_class_mean_norms'].append(nc2['class_mean_norms'])
+            record['last_layer_node_class_mean_angles'].append(nc2['class_mean_angles'])
             record['training_loss'].append(total_loss/ len(loader))
             record['training_accuracy'].append(correct/total)
             
@@ -96,6 +103,8 @@ def _measure_neural_collapse(model, graphs):
     
     all_graph_representations = []
     all_true_labels = []
+    all_last_layer_node_features = []
+    all_last_layer_node_labels = []
 
     model.to(device)
     model.eval()
@@ -103,12 +112,18 @@ def _measure_neural_collapse(model, graphs):
     with torch.no_grad():
         for batch in loader:
             batch = batch.to(device)
-            _, graph_representation, _ = model(batch.x, batch.edge_index, batch.batch)
+            _, graph_representation, intermediate_layers = model(batch.x, batch.edge_index, batch.batch)
+            node_features = intermediate_layers[-1] 
+            graph_label_per_node = batch.y[batch.batch] 
+
+            all_last_layer_node_features.append(node_features)
+            all_last_layer_node_labels.append(graph_label_per_node)
+
             all_graph_representations.append(graph_representation)
             all_true_labels.append(batch.y)
 
     model.train()
-    return torch.cat(all_graph_representations), torch.cat(all_true_labels)
+    return torch.cat(all_graph_representations), torch.cat(all_true_labels), torch.cat(all_last_layer_node_features), torch.cat(all_last_layer_node_labels)
 
 
 # measure Dirichlet energy metrics

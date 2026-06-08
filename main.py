@@ -26,7 +26,7 @@ def build_job_list(seeds=[0, 1, 2, 3, 4]):
                     jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p, "model_name" : model_name, "seed": s})
 
         # the homophilies
-        homophily = [0.3, 0.6, 0.9]
+        homophily = [0.1, 0.3, 0.5, 0.7, 0.9]
         # the noise
         noise = [10, 20, 50]
         # the global pooling step
