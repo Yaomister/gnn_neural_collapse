@@ -14,7 +14,7 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)
 
 
-def build_job_list(seeds=[0]):
+def build_job_list(seeds=[1]):
     jobs = []
     for s in seeds:
         # the models we're training
