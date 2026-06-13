@@ -14,7 +14,7 @@ def set_seed(seed):
     torch.cuda.manual_seed_all(seed)
 
 
-def build_job_list(seeds=[4]):
+def build_job_list(seeds=[0, 1]):
     jobs = []
     for s in seeds:
         # the models we're training
@@ -22,7 +22,7 @@ def build_job_list(seeds=[4]):
 
         for ds_name in ["ENZYMES"]:
             for model_name in models:
-                for p in ["mean", "max"]:
+                for p in ["sum"]:
                     jobs.append({"experiment": 1, "dataset_name": ds_name, "pool": p, "model_name" : model_name, "seed": s})
 
         # the homophilies
@@ -30,7 +30,7 @@ def build_job_list(seeds=[4]):
         # the noise
         noise = [10, 20, 50]
         # the global pooling step
-        pools = ["mean", "max"]
+        pools = ["sum"]
         for m in models:
             for h in homophily:
                 for n in noise:

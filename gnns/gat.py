@@ -1,6 +1,6 @@
 from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
-from torch_geometric.nn import GATConv, global_mean_pool, global_max_pool
+from torch_geometric.nn import GATConv, global_mean_pool, global_max_pool, global_add_pool
 
 
 class GAT(Module):
@@ -29,6 +29,8 @@ class GAT(Module):
             graph_representation = global_mean_pool(x, batch)
         elif self.pool == "max":
             graph_representation = global_max_pool(x, batch)
+        elif self.pool == "sum":
+            graph_representation = global_add_pool(x, batch)
         else:
             raise ValueError(f"unknown pool {self.pool}")
         x = self.classifier(graph_representation)

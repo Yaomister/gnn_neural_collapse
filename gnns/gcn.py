@@ -1,6 +1,6 @@
 from torch.nn import ModuleList, Linear, Module
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool
+from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool, global_add_pool
 
 
 class GCN(Module):
@@ -28,6 +28,8 @@ class GCN(Module):
             graph_representation = global_mean_pool(x, batch)
         elif self.pool == "max":
             graph_representation = global_max_pool(x, batch)
+        elif self.pool == "sum":
+            graph_representation = global_add_pool(x, batch)
         else:
             raise ValueError(f"unknown pool {self.pool}")
             
