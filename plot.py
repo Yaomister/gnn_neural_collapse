@@ -11,7 +11,6 @@ homophily = [0.1, 0.3, 0.5, 0.7, 0.9]
 pooling = ["max", "mean", "sum"]
 noise = [50, 20, 10]
 models = ["GCN", "GAT", "GraphSAGE"]
-metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
 
 # load all the .pt files containing the data
 def load_results():
@@ -54,6 +53,7 @@ def group_data(tag, key):
 
 # Plot 1: NC1 and NC2 metrics plotted against training epoch for each GNN architecutre (for synthetic datasets and ENZYMES)
 def plot_experiment_1():
+    metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
     for h in homophily:
         for n in noise:
             for p in pooling:
@@ -70,9 +70,9 @@ def plot_experiment_1():
                         epochs = np.arange(1, len(mean) + 1)
                         std = runs.std(axis=0, ddof=1)
 
-                        line,  = ax[m, k].plot(epochs, mean, color="blue")
+                        ax[m, k].plot(epochs, mean, color="blue")
 
-                        ax[m, k].fill_between(epochs, mean - std, mean + std, color= line.get_color(), alpha=0.2, linewidth=0)
+                        ax[m, k].fill_between(epochs, mean - std, mean + std, color= "blue", alpha=0.2, linewidth=0)
                         # ax[m, k].set_yscale("log")
                         # ax[m, k].set_ylim(0, 1.5)
                         if m == 0:
@@ -96,11 +96,12 @@ def plot_experiment_1():
                 ax[2, 0].set_ylabel("NC2: Class Mean Norms")
 
 
-                fig.savefig(f"figures/{tag}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+            fig.savefig(f"figures/graph_1_h{h}_n{n}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
 
 def plot_experiment_2():
+    metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
     colors = {50: "red", 20: "green", 10: "blue"} 
     for p in pooling:
         fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey=True)
@@ -130,7 +131,7 @@ def plot_experiment_2():
                     final_metrics_std = np.asarray(final_metrics_std)
                     tracked_h = np.asarray(tracked_h)
                     
-                    line, = ax[m, k].plot(tracked_h, final_metrics,
+                    ax[m, k].plot(tracked_h, final_metrics,
                                           color=colors[n], label=f"noise={n}")
 
                     
@@ -151,17 +152,64 @@ def plot_experiment_2():
         ax[1, 0].set_ylabel("NC2: Class Mean Variance")
         ax[2, 0].set_ylabel("NC2: Class Mean Norms")
         ax[0, 2].legend(loc="upper right")
-        fig.savefig(f"figures/{tag}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+        fig.savefig(f"figures/graph_2_p{p}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
+def plot_experiment_3():
+    for n in noise:
+        fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey="row")
+        for i, p in enumerate(pooling):
+            for k, m in enumerate(models):
+                final_within_class_energy_means, final_between_class_energy_means, final_within_class_energy_std, final_between_class_energy_std = [], [], [], []
+                for h in homophily:
+                    tag = f"exp2_{m}_h{h}_n{n}_{p.lower()}"
+                    data = group_data(tag, "dirichlet_energies_at_intermediate_layers")
+                    within_class_energy = [[e[-1][0] for e in seed_run][-1] for seed_run in data]
+                    between_class_energy = [[e[-1][1] for e in seed_run][-1] for seed_run in data]
+                    training_accuracy = group_data(tag, "training_accuracy")
+                    if not data:
+                        continue
+                    within_class_energy_runs = np.asarray(within_class_energy)
+                    within_class_energy_mean = within_class_energy_runs.mean(axis=0)
+                    within_class_energy_std = within_class_energy_runs.std(axis=0, ddof=1)
+                    
+                    between_class_energy_runs = np.asarray(between_class_energy)
+                    between_class_energy_mean = between_class_energy_runs.mean(axis=0)
+                    between_class_energy_std = between_class_energy_runs.std(axis=0, ddof=1)
 
+
+                    final_within_class_energy_means.append(within_class_energy_mean)
+                    final_between_class_energy_means.append(between_class_energy_mean)
+                    final_between_class_energy_std.append(between_class_energy_std)
+                    final_within_class_energy_std.append(within_class_energy_std)
+
+                final_between_class_energy_means = np.asarray(final_between_class_energy_means)
+                final_between_class_energy_std = np.asarray(final_between_class_energy_std)
+                final_within_class_energy_means = np.asarray(final_within_class_energy_means)
+                final_within_class_energy_std = np.asarray(final_within_class_energy_std)
+
+                ax[i, k].plot(homophily, final_between_class_energy_means, color="blue", label = "Between-Class Energy")
+                ax[i, k].fill_between(homophily, final_between_class_energy_means - final_between_class_energy_std, final_between_class_energy_means + final_between_class_energy_std, color= "blue", alpha=0.2, linewidth=0)
+                ax[i, k].plot(homophily, final_within_class_energy_means, color="green", label = "Within-Class Energy")
+                ax[i, k].fill_between(homophily, final_within_class_energy_means - final_within_class_energy_std, final_within_class_energy_means + final_within_class_energy_std, color= "green", alpha=0.2, linewidth=0)
+                ax[i, k].yaxis.set_major_locator(ticker.LogLocator(base=10))
+                ax[i, k].yaxis.set_minor_locator(ticker.NullLocator())  
+                ax[i, k].xaxis.set_major_locator(ticker.MultipleLocator(0.1))
+                ax[2, k].set_xlabel("Graph Homophily")
+
+        ax[0, 2].legend(loc="upper right")
+        ax[0, 0].set_ylabel("Max-Pool")
+        ax[1, 0].set_ylabel("Mean-Pool")
+        ax[2, 0].set_ylabel("Sum-Pool")
+        fig.savefig(f"figures/graph_3_n{n}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
 
 
 if __name__ == "__main__":
-    plot_experiment_1()
+    # plot_experiment_1()
     # plot_experiment_2()
+    plot_experiment_3()
     
 
 
