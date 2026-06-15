@@ -11,6 +11,7 @@ homophily = [0.1, 0.3, 0.5, 0.7, 0.9]
 pooling = ["max", "mean", "sum"]
 noise = [50, 20, 10]
 models = ["GCN", "GAT", "GraphSAGE"]
+nc_metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
 
 # load all the .pt files containing the data
 def load_results():
@@ -53,17 +54,16 @@ def group_data(tag, key):
 
 # Plot 1: NC1 and NC2 metrics plotted against training epoch for each GNN architecutre (for synthetic datasets and ENZYMES)
 def plot_experiment_1():
-    metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
     for h in homophily:
         for n in noise:
             for p in pooling:
-                fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey="row")
+                fig, ax = plt.subplots(3, 3, figsize=(12, 9), sharex=True, sharey="row")
                 fig.subplots_adjust(wspace=0.05, hspace=0.1)
-                for m in range(len(metrics)):
+                for m in range(len(nc_metrics)):
                     for k in range(len(models)):
                         # tag = f"exp1_{models[k]}_ENZYMES_{p.lower()}"
                         tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
-                        data = group_data(tag, metrics[m])
+                        data = group_data(tag, nc_metrics[m])
                         training_accuracy = group_data(tag, "training_accuracy")
                         runs = np.asarray(data)
                         mean = runs.mean(axis=0)
@@ -88,7 +88,7 @@ def plot_experiment_1():
                     ax[m,0].yaxis.set_minor_locator(ticker.NullLocator())
                     
                 ax[0, 2].legend(loc="upper right")
-                ax[0,0].set_ylim(0.25, 3) 
+                ax[0,0].set_ylim(0, 8) 
                 ax[1,0].set_ylim(0, 0.6)   
                 ax[2,0].set_ylim(0, 0.5) 
                 ax[0, 0].set_ylabel("NC1: Within-Class Variance")
@@ -96,24 +96,23 @@ def plot_experiment_1():
                 ax[2, 0].set_ylabel("NC2: Class Mean Norms")
 
 
-            fig.savefig(f"figures/graph_1_h{h}_n{n}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+                fig.savefig(f"figures/graph_1_h{h}_n{n}_{p}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
 
 
 def plot_experiment_2():
-    metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
     colors = {50: "red", 20: "green", 10: "blue"} 
     for p in pooling:
         fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey=True)
         fig.subplots_adjust(wspace=0.05, hspace=0.1)
-        for m in range(len(metrics)):
+        for m in range(len(nc_metrics)):
             for k in range(len(models)):
                 for n in noise:
                     final_metrics, final_metrics_std, tracked_h = [], [], []
                     for h in homophily:
                         tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
                         training_accuracy = group_data(tag, "training_accuracy")
-                        data = group_data(tag, metrics[m])
+                        data = group_data(tag, nc_metrics[m])
                         if not data:
                             continue
                         runs = np.asarray(data)
@@ -147,7 +146,7 @@ def plot_experiment_2():
                     ax[m, k].xaxis.set_major_locator(ticker.MultipleLocator(1))
             ax[m,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
             ax[m,0].yaxis.set_minor_locator(ticker.NullLocator())
-            ax[m,0].set_ylabel(metrics[m].replace("_"," "))
+            ax[m,0].set_ylabel(nc_metrics[m].replace("_"," "))
         ax[0, 0].set_ylabel("NC1: Within-Class Variance")
         ax[1, 0].set_ylabel("NC2: Class Mean Variance")
         ax[2, 0].set_ylabel("NC2: Class Mean Norms")
@@ -166,7 +165,6 @@ def plot_experiment_3():
                     data = group_data(tag, "dirichlet_energies_at_intermediate_layers")
                     within_class_energy = [[e[-1][0] for e in seed_run][-1] for seed_run in data]
                     between_class_energy = [[e[-1][1] for e in seed_run][-1] for seed_run in data]
-                    training_accuracy = group_data(tag, "training_accuracy")
                     if not data:
                         continue
                     within_class_energy_runs = np.asarray(within_class_energy)
@@ -196,23 +194,56 @@ def plot_experiment_3():
                 ax[i, k].yaxis.set_minor_locator(ticker.NullLocator())  
                 ax[i, k].xaxis.set_major_locator(ticker.MultipleLocator(0.1))
                 ax[2, k].set_xlabel("Graph Homophily")
-
+            ax[i, 0].xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f"{int(x * 5)}"))
+            ax[i,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
+            ax[i,0].yaxis.set_minor_locator(ticker.NullLocator())
         ax[0, 2].legend(loc="upper right")
         ax[0, 0].set_ylabel("Max-Pool")
         ax[1, 0].set_ylabel("Mean-Pool")
         ax[2, 0].set_ylabel("Sum-Pool")
         fig.savefig(f"figures/graph_3_n{n}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
 
+def plot_experiment_4():
+    colors = {"max": "red", "sum": "green", "mean": "blue"} 
+    for n in noise:
+        for h in homophily:
+            fig, ax = plt.subplots(3, 3, figsize=(12, 9), sharex=True, sharey="row")
+            for i, metric in enumerate(nc_metrics):
+                for j, m in enumerate(models):
+                    for p in pooling:
+                        tag = f"exp2_{m}_h{h}_n{n}_{p.lower()}"
+                        data = group_data(tag, metric)
+                        
+                        runs = np.asarray(data)
+                        mean = runs.mean(axis=0)
+                        std = runs.std(axis = 0, ddof=1)
+                        training_accuracy = group_data(tag, "training_accuracy")
+                        tpt = find_tpt(np.asarray(training_accuracy).mean(axis=0))
+                        if tpt is None:
+                            continue
 
+                        mean_to_plot = mean[tpt:]
+                        mean_to_plot = mean[tpt:]
+                        epochs = np.arange(tpt, tpt + len(mean_to_plot))   # was: np.arange(1, len+1)
+                        ax[i, j].fill_between(epochs, mean_to_plot - std[tpt:], mean_to_plot + std[tpt:],alpha=0.2, linewidth=0, color=colors[p])
+                        ax[i, j].plot(epochs, mean_to_plot, color=colors[p], label = f"{p} pool")
+                ax[i,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
+                ax[i,0].yaxis.set_minor_locator(ticker.NullLocator())
+            ax[0, 0].set_ylabel("NC1: Within-Class Variance")
+            ax[1, 0].set_ylabel("NC2: Class Mean Variance")
+            ax[2, 0].set_ylabel("NC2: Class Mean Norms")
+            ax[0, 2].legend(loc="upper right")
+            fig.subplots_adjust(hspace=0.1)
+            fig.savefig(f"figures/graph_4_n{n}_h{h}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+
+
+
+                        
+                    
 
 
 if __name__ == "__main__":
     # plot_experiment_1()
     # plot_experiment_2()
-    plot_experiment_3()
-    
-
-
-
-# Plot 3: within-class and between class-energy vs epoch time (same grpah)
-# Plot 4: NC1 and NC2 metrics plotted against training epoch, one line per pooling operator 
+    # plot_experiment_3()
+    plot_experiment_4()
