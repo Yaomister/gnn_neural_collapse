@@ -1,10 +1,17 @@
 import os
 import torch
 import numpy as np
+import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 
 
 os.makedirs("figures", exist_ok=True)
+
+homophily = [0.1, 0.3, 0.5, 0.7, 0.9]
+pooling = ["max", "mean", "sum"]
+noise = [50, 20, 10]
+models = ["GCN", "GAT", "GraphSAGE"]
+metrics = ["within_class_variance", "class_mean_angles", "class_mean_norms"]
 
 # load all the .pt files containing the data
 def load_results():
@@ -15,232 +22,149 @@ def load_results():
             results[tag] = torch.load(f"results/{tag}.pt", weights_only=False)
     return results
 
-# find the epoch where the terminal phase of training (TPT) begins
-def find_tpt(record, threshold=0.95, patience=5):
-    accs = record["training_accuracy"]
-    epochs = record["epoch"]
+
+
+def find_tpt(accuracy, threshold = 0.99, patience = 5):
     streak = 0
-    # as long as the training accuracy is above 0.95 for the past 5 epochs, we say that TPT has started
-    for i, a in enumerate(accs):
-        streak = streak + 1 if a >= threshold else 0
-        if streak >= patience:
-            return epochs[i - patience + 1]
+
+    for i, acc in enumerate(accuracy):
+        streak = streak + 1 if acc > threshold else 0
+        if streak > patience:
+            return i - patience + 1
+        
     return None
+        
 
-# for comparing graphs side by side
-def plot_nc_overlay(records_by_label, metric, ylabel, fname, logy=False):
-    fig, ax = plt.subplots(figsize=(6, 5))
-    for label, record in records_by_label.items():
-        ax.plot(record["epoch"], record[metric], label=label)
-    if logy: ax.set_yscale("log")
-    ax.set_xlabel("Epoch"); ax.set_ylabel(ylabel); ax.legend()
-    fig.savefig(f"figures/{fname}.png"); plt.close()
-
-
-# add a red line to indicte when TPT has started
 def add_tpt_line(ax, tpt):
     if tpt is not None:
-        ax.axvline(x=tpt, color="red", linestyle="--", linewidth=1.5, label="TPT")
+        ax.axvline(x = tpt, color = "red", linestyle="--", linewidth=1.5, label="TPT")
 
-
-# plot the within-class variance, norm standard deviation, and equitriangularity
-def plot_nc(tag, record):
-    fig, axs = plt.subplots(1, 3, figsize=(18, 5))
-    epochs = record["epoch"]
-    tpt = find_tpt(record)
-
-    axs[0].plot(epochs, record["within_class_variance"])
-    # axs[0].set_yscale("log")
-    axs[0].set_ylabel("NC1: within-between-class variance ratio")
-    axs[1].plot(epochs, record["class_mean_norms"]); axs[1].set_ylabel("NC2: norm standard deviation")
-    axs[2].plot(epochs, record["class_mean_angles"]); axs[2].set_ylabel("NC2: equiangularity")
-
-    for ax in axs:
-        ax.set_xlabel("Epoch")
-        add_tpt_line(ax, tpt)
-        ax.legend()
-    fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_nc.png", dpi=300); plt.close()
-
-
-# plot the Dirichlet energy
-def plot_energy(tag, record):
-    # we're not tracking the dirichlet energy for the real graphs
-    energies = record["dirichlet_energies_at_intermediate_layers"]
-    if not energies:
-        return
-    epochs = record["epoch"]
-    tpt = find_tpt(record)
-    num_layers = len(energies[0])
-
-    fig, axs = plt.subplots(1, num_layers, figsize=(6*num_layers, 5))
-    for l in range(num_layers):
-        within  = [energies[e][l][0] for e in range(len(epochs))]
-        between = [energies[e][l][1] for e in range(len(epochs))]
-        axs[l].plot(epochs, within,  label="within-class")
-        axs[l].plot(epochs, between, label="between-class")
-        # axs[l].set_yscale("log")
-        axs[l].set_xlabel("Epoch")
-        axs[l].set_title(f"Layer {l+1}")
-        add_tpt_line(axs[l], tpt)
-        axs[l].legend()
-
-    fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_energy.png", dpi=300); plt.close()
-
-# plot the training loss and accuracy
-def plot_training(tag, record):
-    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
-    epochs = record["epoch"]
-    tpt = find_tpt(record)
-
-    axs[0].plot(epochs, record["training_loss"]);     axs[0].set_ylabel("Training loss")
-    axs[1].plot(epochs, record["training_accuracy"]); axs[1].set_ylabel("Training accuracy")
-
-    for ax in axs:
-        ax.set_xlabel("Epoch")
-        add_tpt_line(ax, tpt)
-        ax.legend()
-    fig.suptitle(tag)
-    plt.savefig(f"figures/{tag}_training.png", dpi=300); plt.close()
-
-
-
-
-def calculate_time_to_floor(record, frac=0.05):
-    variances = record['within_class_variance']
-    start = variances[0]
-    floor = np.mean(variances[-10:])
-    target = floor + frac * (start - floor)
-
-    for i, v in zip(record['epoch'], variances):
-        if v <= target:
-            return i
-    return record['epoch'][-1]
-
-
-def plot_figure_3(results):
-    models = ["GCN", "GAT", "GraphSAGE"]
-    homophily = [0.3, 0.6, 0.9]
-    noise = [50, 20, 10]  
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5))
-    p = 'mean'
-
-    for j, n in enumerate(noise):
-        for m in models:
-            ttf = [calculate_time_to_floor(results[f"exp2_{m}_h{h}_n{n}_{p}"]) for h in homophily]
-            axs[j].plot(homophily, ttf, marker='o', label=m)
-        axs[j].set_title(f"noise = {n}")
-        axs[j].set_xlabel("homophily")
-        axs[j].set_ylabel("the epoch within-class-variance plateaus")
-        axs[j].legend()
-    fig.savefig(f"figures/fig3_{p}.png", dpi=300)
-    plt.close()
-                  
-
-
-
-def plot_figure_2(results):
-    models = ["GCN", "GAT", "GraphSAGE"]
-    homophily = [0.3, 0.6, 0.9]
-    noise = [50, 20, 10]    
-    p = 'max'            
-
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5), sharey=True)
-    for j, n in enumerate(noise):
-        for m in models:
-            means, stds = [], []
-            for h in homophily:
-                value = results[f"exp2_{m}_h{h}_n{n}_{p}"]["within_class_variance"][-10:]
-                mu, sd = np.mean(value), np.std(value)
-                means.append(mu); stds.append(sd)
-            axs[j].errorbar(homophily, means, yerr=stds, marker='o', capsize=3, label=m)
-        axs[j].set_title(f"noise = {n}")
-        axs[j].set_xlabel("homophily")
-        axs[j].set_ylabel(r"NC1: within-class variance floor")
-        axs[j].legend()
-    fig.savefig(f"figures/fig2_{p}.png", dpi=300)
-    plt.close()
-
-   
-
-def plot_figure_1(results):
-    fig, axs = plt.subplots(2, 3, figsize=(25, 10), sharey="col")
-    models = [
-        {"GCN (mean pool)": "exp1_GCN_ENZYMES_mean",
-        "GAT (mean pool)": "exp1_GAT_ENZYMES_mean",
-        "GraphSAGE (mean pool)": "exp1_GraphSAGE_ENZYMES_mean"},
-        {
-        "GCN (max pool)": "exp1_GCN_ENZYMES_max",
-        "GAT (max pool)": "exp1_GAT_ENZYMES_max",
-        "GraphSAGE (max pool)": "exp1_GraphSAGE_ENZYMES_max",
-    }
-    ]
-
-    metrics = [
-        ("within_class_variance", "NC1: within-class variance"),
-        ("class_mean_angles", "NC2: equiangularity"),
-        ("class_mean_norms", "NC2: norm std")
-    ]
-
-    for i, model in enumerate(models):
-        for ax, (metric, ylabel) in zip(axs[i], metrics):
-            for label, tag in model.items():
-                r = results[tag]
-                ax.plot(r['epoch'], r[metric], label=label)
-            ax.set_xlabel("epoch")
-            ax.set_ylabel(ylabel)
-            ax.legend()
         
-        fig.savefig("figures/fig1.png", dpi=300); 
-    
-    plt.close()
 
-
-# make it plot both norms and angles
-def plot_figure_4(results):
-    models = ["GCN", "GAT", "GraphSAGE"]
-    homophily = [0.3, 0.6, 0.9]
-    noise = [50, 20, 10]    
-    pooling = ["max", "mean"]          
-
-    fig, axs = plt.subplots(2, 3, figsize=(15, 10), sharey=True)
-    for i, p in enumerate(pooling):
-        # swap for angle
-        axs[i, 0].set_ylabel(f"{p} pool\nNC2 : equiangularity")
-        for j, n in enumerate(noise):
-            for m in models:
-                means, stds = [], []
-                for h in homophily:
-                    value = results[f"exp2_{m}_h{h}_n{n}_{p}"]["class_mean_angles"][-10:]
-                    mu, sd = np.mean(value), np.std(value)
-                    means.append(mu); stds.append(sd)
-                axs[i, j].errorbar(homophily, means, yerr=stds, marker='o', capsize=3, label=m)
-            axs[i, j].set_title(f"noise = {n}")
-            axs[i, j].set_xlabel("homophily")
-            # axs[i, j].set_ylabel(r"NC1: within-class variance floor")
-            axs[i, j].legend()
-    fig.savefig(f"figures/fig4.png", dpi=300)
-    plt.close()
-    
-if __name__ == "__main__":
+def group_data(tag, key):
+    data = []
     results = load_results()
+    for i in range(5):
+        i_tag = f"{tag}_{i}"  
+        if i_tag in results:
+            data.append(results[i_tag][key])
 
-    # plot everything
-    # for tag, record in results.items():
-    #     plot_nc(tag, record)
-    #     plot_training(tag, record)
-    #     if record.get("dirichlet_energies_at_intermediate_layers"):
-    #         plot_energy(tag, record)
-
-    # plot_figure_1(results)
-    # plot_figure_2(results)
-    # plot_figure_3(results)
-    plot_figure_4(results)
- 
+    return data
 
 
+# Plot 1: NC1 and NC2 metrics plotted against training epoch for each GNN architecutre (for synthetic datasets and ENZYMES)
+def plot_experiment_1():
+    for h in homophily:
+        for n in noise:
+            for p in pooling:
+                fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey="row")
+                fig.subplots_adjust(wspace=0.05, hspace=0.1)
+                for m in range(len(metrics)):
+                    for k in range(len(models)):
+                        # tag = f"exp1_{models[k]}_ENZYMES_{p.lower()}"
+                        tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
+                        data = group_data(tag, metrics[m])
+                        training_accuracy = group_data(tag, "training_accuracy")
+                        runs = np.asarray(data)
+                        mean = runs.mean(axis=0)
+                        epochs = np.arange(1, len(mean) + 1)
+                        std = runs.std(axis=0, ddof=1)
+
+                        line,  = ax[m, k].plot(epochs, mean, color="blue")
+
+                        ax[m, k].fill_between(epochs, mean - std, mean + std, color= line.get_color(), alpha=0.2, linewidth=0)
+                        # ax[m, k].set_yscale("log")
+                        # ax[m, k].set_ylim(0, 1.5)
+                        if m == 0:
+                            ax[m, k].set_title(models[k])
+
+                        ax[2, k].set_xlabel("Epoch")
+                        
+                        tpt = find_tpt(np.asarray(training_accuracy).mean(axis=0))
+                        add_tpt_line(ax[m, k], tpt)
+                    ax[m, 0].xaxis.set_major_locator(ticker.MultipleLocator(10))
+                    ax[m, 0].xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f"{int(x * 5)}"))
+                    ax[m,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
+                    ax[m,0].yaxis.set_minor_locator(ticker.NullLocator())
+                    
+                ax[0, 2].legend(loc="upper right")
+                ax[0,0].set_ylim(0.25, 3) 
+                ax[1,0].set_ylim(0, 0.6)   
+                ax[2,0].set_ylim(0, 0.5) 
+                ax[0, 0].set_ylabel("NC1: Within-Class Variance")
+                ax[1, 0].set_ylabel("NC2: Class Mean Variance")
+                ax[2, 0].set_ylabel("NC2: Class Mean Norms")
 
 
+                fig.savefig(f"figures/{tag}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+
+
+
+def plot_experiment_2():
+    colors = {50: "red", 20: "green", 10: "blue"} 
+    for p in pooling:
+        fig, ax = plt.subplots(3, 3, figsize=(12, 12), sharex=True, sharey=True)
+        fig.subplots_adjust(wspace=0.05, hspace=0.1)
+        for m in range(len(metrics)):
+            for k in range(len(models)):
+                for n in noise:
+                    final_metrics, final_metrics_std, tracked_h = [], [], []
+                    for h in homophily:
+                        tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
+                        training_accuracy = group_data(tag, "training_accuracy")
+                        data = group_data(tag, metrics[m])
+                        if not data:
+                            continue
+                        runs = np.asarray(data)
+                        mean = runs.mean(axis=0)
+                        std = runs.std(axis=0, ddof=1)
+                        
+
+                        tpt = find_tpt(np.asarray(training_accuracy).mean(axis=0))
+                        # TPT needs to be reached
+                        if tpt is not None:
+                            final_metrics.append(mean[-1])
+                            final_metrics_std.append(std[-1])
+                            tracked_h.append(h)
+                    final_metrics = np.asarray(final_metrics)
+                    final_metrics_std = np.asarray(final_metrics_std)
+                    tracked_h = np.asarray(tracked_h)
+                    
+                    line, = ax[m, k].plot(tracked_h, final_metrics,
+                                          color=colors[n], label=f"noise={n}")
+
+                    
+                    lower = np.clip(np.minimum(final_metrics_std, final_metrics - 1e-9), 0, None)
+                    upper = final_metrics_std  
+
+                    ax[m, k].errorbar(tracked_h, final_metrics, yerr=[lower, upper], color=colors[n], capsize=3, linewidth=2, elinewidth=1, label=f"noise={n}")
+                    if m == 0:
+                        ax[m, k].set_title(models[k])
+                    ax[m, k].yaxis.set_major_locator(ticker.LogLocator(base=10))
+                    ax[m, k].yaxis.set_minor_locator(ticker.NullLocator())  
+                    ax[2, k].set_xlabel("Graph Homophily")
+                    ax[m, k].xaxis.set_major_locator(ticker.MultipleLocator(1))
+            ax[m,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
+            ax[m,0].yaxis.set_minor_locator(ticker.NullLocator())
+            ax[m,0].set_ylabel(metrics[m].replace("_"," "))
+        ax[0, 0].set_ylabel("NC1: Within-Class Variance")
+        ax[1, 0].set_ylabel("NC2: Class Mean Variance")
+        ax[2, 0].set_ylabel("NC2: Class Mean Norms")
+        ax[0, 2].legend(loc="upper right")
+        fig.savefig(f"figures/{tag}.png", dpi=300, bbox_inches="tight", pad_inches=0.1)
+
+
+
+
+
+
+
+if __name__ == "__main__":
+    plot_experiment_1()
+    # plot_experiment_2()
     
 
+
+
+# Plot 3: within-class and between class-energy vs epoch time (same grpah)
+# Plot 4: NC1 and NC2 metrics plotted against training epoch, one line per pooling operator 
