@@ -61,8 +61,8 @@ def plot_experiment_1():
                 fig.subplots_adjust(wspace=0.05, hspace=0.1)
                 for m in range(len(nc_metrics)):
                     for k in range(len(models)):
-                        # tag = f"exp1_{models[k]}_ENZYMES_{p.lower()}"
-                        tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
+                        tag = f"exp1_{models[k]}_ENZYMES_{p.lower()}"
+                        # tag = f"exp2_{models[k]}_h{h}_n{n}_{p.lower()}"
                         data = group_data(tag, nc_metrics[m])
                         training_accuracy = group_data(tag, "training_accuracy")
                         runs = np.asarray(data)
@@ -122,22 +122,19 @@ def plot_experiment_2():
 
                         tpt = find_tpt(np.asarray(training_accuracy).mean(axis=0))
                         # TPT needs to be reached
-                        if tpt is not None:
-                            final_metrics.append(mean[-1])
-                            final_metrics_std.append(std[-1])
-                            tracked_h.append(h)
+                        # if tpt is not None:
+                        final_metrics.append(mean[-1])
+                        final_metrics_std.append(std[-1])
+                        tracked_h.append(h)
                     final_metrics = np.asarray(final_metrics)
                     final_metrics_std = np.asarray(final_metrics_std)
                     tracked_h = np.asarray(tracked_h)
                     
-                    ax[m, k].plot(tracked_h, final_metrics,
-                                          color=colors[n], label=f"noise={n}")
-
-                    
-                    lower = np.clip(np.minimum(final_metrics_std, final_metrics - 1e-9), 0, None)
-                    upper = final_metrics_std  
-
-                    ax[m, k].errorbar(tracked_h, final_metrics, yerr=[lower, upper], color=colors[n], capsize=3, linewidth=2, elinewidth=1, label=f"noise={n}")
+                    ax[m, k].plot(tracked_h, final_metrics, color=colors[n], label=f"noise={n}")
+                    ax[m, k].fill_between(tracked_h,
+                                        final_metrics - final_metrics_std,
+                                        final_metrics + final_metrics_std,
+                                        color=colors[n], alpha=0.2)
                     if m == 0:
                         ax[m, k].set_title(models[k])
                     ax[m, k].yaxis.set_major_locator(ticker.LogLocator(base=10))
@@ -226,9 +223,12 @@ def plot_experiment_4():
                         mean_to_plot = mean[tpt:]
                         epochs = np.arange(tpt, tpt + len(mean_to_plot))   # was: np.arange(1, len+1)
                         ax[i, j].fill_between(epochs, mean_to_plot - std[tpt:], mean_to_plot + std[tpt:],alpha=0.2, linewidth=0, color=colors[p])
+                        if i == 0:
+                            ax[i, j].set_title(m)
                         ax[i, j].plot(epochs, mean_to_plot, color=colors[p], label = f"{p} pool")
                 ax[i,0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
                 ax[i,0].yaxis.set_minor_locator(ticker.NullLocator())
+                ax[i, 0].xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: f"{int(x * 5)}"))
             ax[0, 0].set_ylabel("NC1: Within-Class Variance")
             ax[1, 0].set_ylabel("NC2: Class Mean Variance")
             ax[2, 0].set_ylabel("NC2: Class Mean Norms")
