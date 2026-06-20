@@ -9,7 +9,7 @@ def run(model_name, homophily, noise, pool, hidden_dim=64, num_epochs=200):
     """Experiments 2,3,4: train a GNN on SBM graphs and record NC + Dirichlet energy metrics.
 
     Generates 1000 graphs from a 3-class SBM with the given homophily and noise level, trains
-    for num_epochs epochs, and returns the full metric record from training.train().
+    for num_epochs epochs, and returns the full metric record.
     """
 
     # the embedding dimensions of the SBM generated graphs
