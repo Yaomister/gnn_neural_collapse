@@ -4,6 +4,13 @@ from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool, globa
 
 
 class GCN(Module):
+    """Graph Convolutional Network for graph classification.
+
+    Stacks num_hidden_layers GCNConv layers with ReLU activations (except the last layer),
+    applies global pooling to obtain a graph-level representation, then classifies with a
+    linear head. Returns (logits, graph_repr, intermediate_node_features).
+    """
+
     def __init__(self, in_dim, hidden_layer_dim, num_hidden_layers, num_classes, pool):
         super().__init__()
         self.layers = ModuleList()

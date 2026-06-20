@@ -4,6 +4,14 @@ from torch_geometric.nn import GATConv, global_mean_pool, global_max_pool, globa
 
 
 class GAT(Module):
+    """Graph Attention Network for graph classification.
+
+    Stacks num_hidden_layers GATConv layers with multi-head attention (num_heads heads).
+    hidden_layer_dim must be divisible by num_heads since each head outputs hidden_layer_dim //
+    num_heads features and they are concatenated back. Follows the same pooling and classification
+    structure as GCN. Returns (logits, graph_repr, intermediate_node_features).
+    """
+
     def __init__(self, in_dim, hidden_layer_dim, num_classes, num_hidden_layers, pool, num_heads=4):
         super().__init__()
         # make sure the hidden layer feature embedding dimensions can be evenly split upon the heads

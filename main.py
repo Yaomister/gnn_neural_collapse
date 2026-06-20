@@ -15,6 +15,11 @@ def set_seed(seed):
 
 
 def build_job_list(seeds=[0, 1, 2, 3, 4]):
+    """Build the full list of experiment configs to run.
+
+    Each job is a dict with at minimum 'experiment' and 'seed'. Experiment 1 uses real TU
+    datasets; experiment 2 uses SBM-generated graphs with varying homophily and noise.
+    """
     jobs = []
     for s in seeds:
         # the models we're training
@@ -44,6 +49,7 @@ def build_job_list(seeds=[0, 1, 2, 3, 4]):
     return jobs
 
 def run_one_job(job):
+    """Execute a single experiment job and save its result dict."""
     os.makedirs("results", exist_ok=True)
     set_seed(job["seed"])
 

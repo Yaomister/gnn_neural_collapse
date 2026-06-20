@@ -11,6 +11,13 @@ default_composition = torch.tensor([
 ])
 
 class StochasticBlockModel():
+    """Generates synthetic graph-classification datasets with controlled homophily.
+
+    Each graph belongs to one of num_graph_classes classes, determined by the node-class
+    composition (proportion of each node type). Edges are drawn with probability p_in for
+    same-class node pairs and p_out for cross-class pairs, where p_in and p_out are calibrated
+    so that the expected adjusted edge homophily matches the target homophily value.
+    """
 
     def __init__(self, num_nodes, num_graph_classes, num_node_classes, homophily, feature_dim, noise, density = 0.5, composition = default_composition):
         self.num_nodes = num_nodes
@@ -25,8 +32,12 @@ class StochasticBlockModel():
 
         self.nodes_per_class = num_nodes // num_node_classes
 
-    # calculate the 
     def _get_probability(self, graph_class):
+        """Compute within-class (p_in) and between-class (p_out) edge probabilities.
+
+        Solves backwards from the target adjusted homophily to per-class edge probabilities,
+        accounting for node-class imbalance via the class proportion vector S = sum(p_k^2).
+        """
         current_composition = self.composition[graph_class]
 
         sum_p_k = sum([p * p for p in current_composition])
@@ -44,6 +55,7 @@ class StochasticBlockModel():
 
 
     def generate(self, num_graphs):
+        """Generate num_graphs PyG Data objects with node features and graph-level labels."""
         graphs = []
         
         # generate graphs

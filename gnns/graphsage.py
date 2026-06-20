@@ -4,6 +4,13 @@ from torch_geometric.nn import SAGEConv, global_mean_pool, global_max_pool, glob
 
 
 class GraphSAGE(Module):
+    """GraphSAGE model for graph classification.
+
+    num_hidden_layers SAGEConv layers with ReLU activations (except the last layer),
+    applies global pooling, then classifies with a linear head. Returns (logits, graph_repr,
+    intermediate_node_features).
+    """
+
     def __init__(self, in_dim, num_classes, num_hidden_layers, hidden_layer_dim, pool):
         super().__init__()
         self.layers = ModuleList()

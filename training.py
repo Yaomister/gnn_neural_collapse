@@ -7,7 +7,21 @@ from nc import calculate_metrics
 from dirichlet_energy import calculate_dirichlet_energy
 
 
-def train(model, graphs, num_classes, num_epochs, measure_energy = False, learning_rate = 1e-3, weight_decay = 1e-5, measure_interval = 50):
+def train(model, graphs, num_classes, num_epochs, measure_energy=False, learning_rate=1e-3, weight_decay=1e-5, measure_interval=50):
+    """Train a GNN for graph classification and record NC metrics at regular intervals.
+
+    Args:
+        model: GNN with forward(x, edge_index, batch) -> (logits, graph_repr, layer_list).
+        graphs: List of PyG Data objects with x, edge_index, y, and (if measure_energy) node_labels.
+        num_classes: Number of graph classes.
+        num_epochs: Total training epochs.
+        measure_energy: Whether to compute per-layer Dirichlet energy (only for SBM graphs that
+            carry node_labels; requires batch_size=1 to avoid cross-graph contamination).
+        measure_interval: How often (in epochs) to log metrics.
+
+    Returns:
+        dict with per-measurement-epoch lists for loss, accuracy, and NC metrics.
+    """
 
     # move everything to GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,8 +110,8 @@ def train(model, graphs, num_classes, num_epochs, measure_energy = False, learni
 
     return record
 
-# measure neural collapse metrics
 def _measure_neural_collapse(model, graphs):
+    """Collect pooled graph representations and last-layer node features across the dataset."""
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = DataLoader(dataset=graphs, batch_size=64, shuffle=False)
     
@@ -126,8 +140,13 @@ def _measure_neural_collapse(model, graphs):
     return torch.cat(all_graph_representations), torch.cat(all_true_labels), torch.cat(all_last_layer_node_features), torch.cat(all_last_layer_node_labels)
 
 
-# measure Dirichlet energy metrics
 def _measure_dirichlet_energy(model, graphs, num_layers):
+    """Compute average within/between-class Dirichlet energy per layer across the dataset.
+
+    Uses batch_size=1 so each graph's edge_index refers only to its own nodes; batching
+    multiple graphs would merge them into one disconnected graph and misalign node_labels.
+    Returns a list of [within_avg, between_avg] for each GNN layer.
+    """
     # we have to use batches of 1, or else everything gets concatnated into one big graph, which messes up the split between within-class and between-class energies
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loader = DataLoader(dataset=graphs, batch_size=1, shuffle=False)

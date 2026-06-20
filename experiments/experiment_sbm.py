@@ -5,7 +5,12 @@ from sbm import StochasticBlockModel
 
 
 # Experiment 2, 3, and 4: show that pooling and homophily affect the speed and completeness of neural collapse
-def run(model_name, homophily, noise, pool, hidden_dim = 64, num_epochs = 200):
+def run(model_name, homophily, noise, pool, hidden_dim=64, num_epochs=200):
+    """Experiments 2,3,4: train a GNN on SBM graphs and record NC + Dirichlet energy metrics.
+
+    Generates 1000 graphs from a 3-class SBM with the given homophily and noise level, trains
+    for num_epochs epochs, and returns the full metric record from training.train().
+    """
 
     # the embedding dimensions of the SBM generated graphs
     in_dim = 16

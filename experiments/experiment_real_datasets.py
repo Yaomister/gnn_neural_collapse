@@ -2,7 +2,12 @@ from training import train
 from utils import models_list
 
 # Experiment 1: confirming neural collapse happens on real datasets (ENZYMES, MUTAG, PROTEINS)
-def run(dataset, dataset_name, model_name, pool, hidden_dim = 512, num_epochs = 3000):
+def run(dataset, dataset_name, model_name, pool, hidden_dim=512, num_epochs=3000):
+    """Experiment 1: train a GNN on a real TU dataset and record NC metrics.
+
+    Uses a larger hidden_dim and more epochs than the SBM experiment to account for the
+    higher complexity and fewer labels in real-world graph datasets.
+    """
     # the number of classes of the datasets
     num_classes = dataset.num_classes
     # the feature embedding dimensions
