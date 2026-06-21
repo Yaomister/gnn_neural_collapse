@@ -4,14 +4,6 @@ import numpy as np
 def calculate_metrics(features: torch.Tensor, labels, num_classes):
     """Compute NC1 (within-class variability) and NC2 (class-mean geometry) collapse metrics.
 
-    NC1 is the trace of Sigma_W @ p_inv(Sigma_B) normalized by num_classes, where Sigma_W and
-    Sigma_B are the within- and between-class covariance matrices. Lower values indicate tighter
-    within-class clustering relative to between-class separation.
-
-    NC2 measures deviation from the Equiangular Tight Frame (ETF): angle spread is the mean
-    absolute difference between pairwise cosine similarities and the ideal -1/(C-1), and norm
-    std is the coefficient of variation of class-mean norms.
-
     Returns (nc1_dict, nc2_dict) where nc1_dict has key 'within_class_variance' and nc2_dict
     has keys 'class_mean_angles' and 'class_mean_norms'.
     """

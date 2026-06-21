@@ -4,10 +4,9 @@ from torch_geometric.nn import GCNConv, global_mean_pool, global_max_pool, globa
 
 
 class GCN(Module):
-    """Graph Convolutional Network for graph classification.
+    """Graph Convolutional Network.
 
-    Stacks num_hidden_layers GCNConv layers with ReLU activations (except the last layer),
-    applies global pooling to obtain a graph-level representation, then classifies with a
+    num_hidden_layers GCNConv layers with ReLU activations (except the last layer), applies global pooling to obtain a graph-level representation, then classifies with a
     linear head. Returns (logits, graph_repr, intermediate_node_features).
     """
 

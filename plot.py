@@ -20,7 +20,7 @@ NC_ROW_LABELS = [
 ]
 
 def load_results():
-    """Load all .pt result files from results/ into a dict keyed by filename stem."""
+    """Load all result files from results/ into a dict keyed by filename stem."""
     results = {}
     for file_name in os.listdir("results"):
         if file_name.endswith(".pt"):
@@ -221,7 +221,7 @@ def plot_experiment_4(results):
                         _plot_band(ax[i, j], epochs, mean[tpt:], std[tpt:], colors[p], label=f"{p} pool")
                         if i == 0:
                             ax[i, j].set_title(m)
-
+            
                 ax[i, 0].yaxis.set_major_locator(ticker.MultipleLocator(0.5))
                 ax[i, 0].yaxis.set_minor_locator(ticker.NullLocator())
                 # x ticks are measurement indices; multiply by 5 to recover actual epoch

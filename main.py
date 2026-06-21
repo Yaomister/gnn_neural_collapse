@@ -15,11 +15,7 @@ def set_seed(seed):
 
 
 def build_job_list(seeds=[0, 1, 2, 3, 4]):
-    """Build the full list of experiment configs to run.
-
-    Each job is a dict with at minimum 'experiment' and 'seed'. Experiment 1 uses real TU
-    datasets; experiment 2 uses SBM-generated graphs with varying homophily and noise.
-    """
+    """Build the full list of experiment configs to run."""
     jobs = []
     for s in seeds:
         # the models we're training
@@ -72,6 +68,7 @@ def run_one_job(job):
 
 
 if __name__ == "__main__":
+    """Run everything."""
     jobs = build_job_list()
     task_id = os.environ.get("SLURM_ARRAY_TASK_ID")
 

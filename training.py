@@ -8,15 +8,14 @@ from dirichlet_energy import calculate_dirichlet_energy
 
 
 def train(model, graphs, num_classes, num_epochs, measure_energy=False, learning_rate=1e-3, weight_decay=1e-5, measure_interval=50):
-    """Train a GNN for graph classification and record NC metrics at regular intervals.
+    """Train a GNN for graph classification and record metrics.
 
     Args:
         model: GNN with forward(x, edge_index, batch) -> (logits, graph_repr, layer_list).
-        graphs: List of PyG Data objects with x, edge_index, y, and (if measure_energy) node_labels.
+        graphs: List of PyG Data objects with x, edge_index, y, and (if we're measuring the Dirichlet energy) node_labels.
         num_classes: Number of graph classes.
         num_epochs: Total training epochs.
-        measure_energy: Whether to compute per-layer Dirichlet energy (only for SBM graphs that
-            carry node_labels; requires batch_size=1 to avoid cross-graph contamination).
+        measure_energy: Whether to compute per-layer Dirichlet energy (only for SBM graphs that carry node_labels; requires batch_size=1 to avoid cross-graph contamination).
         measure_interval: How often (in epochs) to log metrics.
 
     Returns:
